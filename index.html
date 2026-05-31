@@ -361,6 +361,14 @@
   }
   .modal-actions .btn-save { background: var(--text); color: var(--bg); border: none; }
   .modal-actions .btn-cancel { background: transparent; color: var(--text-dim); border: 1px solid var(--line); }
+  .swatch-row { display: flex; flex-wrap: wrap; gap: 9px; }
+  .swatch {
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; box-shadow: 0 0 0 1px var(--line);
+    transition: transform 0.1s;
+  }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.sel { border-color: var(--surface); box-shadow: 0 0 0 2px var(--text); }
 
   /* ---- Страница проекта (overlay) ---- */
   .proj-overlay {
@@ -376,9 +384,7 @@
     padding: 14px 22px; flex-wrap: wrap;
     position: sticky; top: 0; z-index: 5;
     margin: 0 -22px 8px;
-    background: rgba(244,242,236,0.94);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: var(--bg);
     border-bottom: 1px solid var(--line-soft);
   }
   .proj-back {
@@ -663,6 +669,12 @@
   }
   .time-modeswitch button + button { border-left: 1px solid var(--line); }
   .time-modeswitch button.on { background: var(--gold); color: #fff; }
+  .log-switchbar {
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .log-switchbar .time-modeswitch { margin-bottom: 0; }
+  .log-switchbar .log-viewswitch button.on { background: var(--text); color: #fff; }
 
   .time-nav {
     display: flex; align-items: center; gap: 10px;
@@ -690,7 +702,7 @@
     transition: all 0.12s; flex-shrink: 0;
   }
   .time-today-btn:hover { border-color: var(--gold); color: var(--text); }
-  .time-today-btn.hidden { visibility: hidden; }
+  .time-today-btn.hidden { display: none; }
 
   .time-section-title {
     font-size: 13px; font-weight: 600; margin: 18px 0 10px;
@@ -783,6 +795,34 @@
   }
   .time-empty .big { font-size: 32px; margin-bottom: 12px; }
 
+  /* строки журнала выполненного (вид Done) */
+  .done-entry {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; margin-bottom: 7px;
+    display: flex; align-items: flex-start; gap: 11px;
+    padding: 11px 13px;
+  }
+  .done-check {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+    background: #1d6b51; color: #fff; font-size: 11px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .done-entry-body { flex: 1; min-width: 0; }
+  .done-entry-task { font-size: 13.5px; color: var(--text); font-weight: 500; }
+  .done-entry-meta {
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 4px;
+  }
+  .done-entry-proj {
+    font-size: 11px; color: #fff; padding: 2px 8px; border-radius: 9px;
+    font-weight: 500; white-space: nowrap;
+  }
+  .done-entry-time {
+    font-size: 11.5px; color: var(--text-faint); white-space: nowrap;
+    flex-shrink: 0; font-variant-numeric: tabular-nums;
+  }
+  .dlabel-count { color: var(--text-faint); font-weight: 500; }
+
   /* поля окна записи времени */
   .te-modal-field { margin: 11px 0; }
   .te-modal-field label {
@@ -831,7 +871,7 @@
     transition: all 0.12s; flex-shrink: 0;
   }
   .cal-today-btn:hover { border-color: var(--gold); color: var(--text); }
-  .cal-today-btn.hidden { visibility: hidden; }
+  .cal-today-btn.hidden { display: none; }
 
   .cal-summary {
     font-size: 12px; color: var(--text-dim); margin-bottom: 14px;
@@ -972,7 +1012,7 @@
     transition: all 0.12s; flex-shrink: 0;
   }
   .day-today-btn:hover { border-color: var(--gold); color: var(--text); }
-  .day-today-btn.hidden { visibility: hidden; }
+  .day-today-btn.hidden { display: none; }
 
   .day-summary {
     font-size: 12px; color: var(--text-dim);
@@ -1143,7 +1183,7 @@
     transition: all 0.12s; flex-shrink: 0;
   }
   .week-today-btn:hover { border-color: var(--gold); color: var(--text); }
-  .week-today-btn.hidden { visibility: hidden; }
+  .week-today-btn.hidden { display: none; }
 
   .week-summary {
     font-size: 12px; color: var(--text-dim);
@@ -1330,9 +1370,14 @@ input:focus,textarea:focus,select:focus{
  background:#dbeafe!important;
  color:#1d4ed8!important;
 }
-.sf-btn.active,.ov-mode-btn.on,.proj-edit-toggle.on{
+.sf-btn.active,.proj-edit-toggle.on{
  background:#111827!important;
  border-color:#111827!important;
+ color:#fff!important;
+}
+.ov-mode-btn.on{
+ background:#d8730f!important;
+ border-color:#d8730f!important;
  color:#fff!important;
 }
 
@@ -1374,7 +1419,7 @@ input:focus,textarea:focus,select:focus{
     <button class="tab"        data-tab="day"      onclick="showTab('day')">Day</button>
     <button class="tab"        data-tab="overview" onclick="showTab('overview')">Clients</button>
     <button class="tab"        data-tab="calendar" onclick="showTab('calendar')">Calendar</button>
-    <button class="tab"        data-tab="time"     onclick="showTab('time')">Time</button>
+    <button class="tab"        data-tab="time"     onclick="showTab('time')">Log</button>
   </div>
 
   <!-- WEEK -->
@@ -1439,9 +1484,15 @@ input:focus,textarea:focus,select:focus{
 
   <!-- TIME -->
   <div class="tab-page" id="page-time">
-    <div class="time-modeswitch">
-      <button id="tm-week" onclick="timeSetMode('week')">Week</button>
-      <button id="tm-month" onclick="timeSetMode('month')">Month</button>
+    <div class="log-switchbar">
+      <div class="time-modeswitch log-viewswitch">
+        <button id="lv-done" onclick="logSetView('done')">Done</button>
+        <button id="lv-time" onclick="logSetView('time')">Time tracked</button>
+      </div>
+      <div class="time-modeswitch" id="time-periodswitch">
+        <button id="tm-week" onclick="timeSetMode('week')">Week</button>
+        <button id="tm-month" onclick="timeSetMode('month')">Month</button>
+      </div>
     </div>
     <div class="time-nav">
       <button class="time-nav-btn" onclick="timeShift(-1)" title="Back">‹</button>
@@ -2231,6 +2282,12 @@ function renderTile(p, s, pi, pcount) {
   return h;
 }
 
+// палитра цветов клиента (выбор кружком, без ввода hex)
+const CLIENT_COLORS = [
+  '#45528f', '#1d6b51', '#9a3a5a', '#9a7b30', '#3d7a8c',
+  '#8a4b9c', '#b5562e', '#4a7c3f', '#a13d3d', '#5a5550'
+];
+
 // ----- редактирование сфер -----
 function editSphere(id) {
   const s = sphereById(id);
@@ -2238,11 +2295,11 @@ function editSphere(id) {
   openModal('Client: ' + escapeHtml(s.name), [
     { key: 'name', label: 'Client name', value: s.name },
     { key: 'tag',  label: 'Short label (for tiles)', value: s.tag },
-    { key: 'color', label: 'Colour (HEX, e.g. #1d6b51)', value: s.color }
+    { key: 'color', label: 'Colour', value: s.color, swatches: CLIENT_COLORS }
   ], function (vals) {
     s.name = vals.name.trim() || s.name;
     s.tag = vals.tag.trim() || s.tag;
-    if (/^#[0-9a-fA-F]{6}$/.test(vals.color.trim())) s.color = vals.color.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test((vals.color || '').trim())) s.color = vals.color.trim();
     saveState(true);
     renderAll();
   });
@@ -2258,7 +2315,8 @@ function addSphere() {
     if (used.indexOf(String.fromCharCode(c)) === -1) { id = String.fromCharCode(c); break; }
   }
   if (!id) id = 'S' + state.spheres.length;
-  state.spheres.push({ id: id, name: name, tag: name.toLowerCase().slice(0, 12), color: '#9a7b30' });
+  const col = CLIENT_COLORS[state.spheres.length % CLIENT_COLORS.length];
+  state.spheres.push({ id: id, name: name, tag: name.toLowerCase().slice(0, 12), color: col });
   inp.value = '';
   saveState(true);
   renderAll();
@@ -2369,7 +2427,17 @@ function openModal(title, fields, onSave) {
   let html = '<h3>' + title + '</h3>';
   fields.forEach(function (f) {
     html += '<label>' + escapeHtml(f.label) + '</label>';
-    if (f.area) {
+    if (f.swatches) {
+      const cur = (f.value || '').toLowerCase();
+      html += '<input type="hidden" id="modal-f-' + f.key + '" value="' + escapeHtml(f.value || '') + '">';
+      html += '<div class="swatch-row">';
+      f.swatches.forEach(function (col) {
+        const sel = (col.toLowerCase() === cur) ? ' sel' : '';
+        html += '<div class="swatch' + sel + '" style="background:' + col + '" ' +
+          'onclick="pickSwatch(\'' + f.key + '\',\'' + col + '\',this)"></div>';
+      });
+      html += '</div>';
+    } else if (f.area) {
       html += '<textarea id="modal-f-' + f.key + '">' + escapeHtml(f.value || '') + '</textarea>';
     } else if (f.date) {
       html += '<input type="date" id="modal-f-' + f.key + '" value="' + escapeHtml(f.value || '') + '">';
@@ -2408,6 +2476,13 @@ function saveModal() {
 function closeModal() {
   document.getElementById('modal-bg').classList.remove('open');
   modalCallback = null;
+}
+function pickSwatch(key, col, el) {
+  const inp = document.getElementById('modal-f-' + key);
+  if (inp) inp.value = col;
+  const row = el.parentNode;
+  row.querySelectorAll('.swatch').forEach(function (s) { s.classList.remove('sel'); });
+  el.classList.add('sel');
 }
 
 // собственное окно подтверждения (не зависит от настроек браузера)
@@ -3235,7 +3310,12 @@ function resetData() {
 // ===== ТАБ «ВРЕМЯ” (лог учёта) =====
 let timeMode = 'month';   // 'week' | 'month'
 let timeOffset = 0;       // смещение периода
+let logView = 'done';     // 'done' | 'time' — какой журнал показываем
 
+function logSetView(view) {
+  logView = view;
+  renderTimeLog();
+}
 function timeSetMode(mode) {
   timeMode = mode;
   timeOffset = 0;
@@ -3269,6 +3349,12 @@ function fmtDuration(min) {
 }
 
 function renderTimeLog() {
+  // подсветка переключателя вида (Done / Time tracked)
+  const dvb = document.getElementById('lv-done');
+  const tvb = document.getElementById('lv-time');
+  if (dvb) dvb.classList.toggle('on', logView === 'done');
+  if (tvb) tvb.classList.toggle('on', logView === 'time');
+
   // переkeyатель режима
   const wb = document.getElementById('tm-week');
   const mb = document.getElementById('tm-month');
@@ -3310,6 +3396,9 @@ function renderTimeLog() {
       : 'in ' + timeOffset + ' mo';
   }
   document.getElementById('time-today-btn').classList.toggle('hidden', timeOffset === 0);
+
+  // ветвление по виду журнала
+  if (logView === 'done') { renderDoneBody(range, periodSub); return; }
 
   // записи периода
   const entries = state.log.filter(function (r) {
@@ -3413,6 +3502,82 @@ function renderTimeLog() {
       '<span class="tdl-sum">' + fmtDuration(daySum) + '</span></div>';
     byDate[dk].forEach(function (r) {
       h += renderTimeEntry(r);
+    });
+    h += '</div>';
+  });
+
+  body.innerHTML = h;
+}
+
+// тело журнала: выполненные задачи (вид Done), из dayLog, по дням
+function renderDoneBody(range, periodSub) {
+  const subEl = document.getElementById('time-sub');
+  const body = document.getElementById('time-body');
+  const MON_FULL = ['January','February','March','April','May','June','July',
+                     'August','September','October','November','December'];
+  const WD_SH = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // выполненное за период
+  const done = (state.dayLog || []).filter(function (r) {
+    return r.date >= range.from && r.date <= range.to;
+  });
+
+  if (subEl) {
+    if (done.length) {
+      subEl.innerHTML = escapeHtml(periodSub) +
+        ' · <span class="tn-total">' + done.length + ' ' +
+        plural(done.length, 'task', 'tasks', 'tasks') + ' done</span>';
+    } else {
+      subEl.textContent = periodSub;
+    }
+  }
+
+  if (!done.length) {
+    body.innerHTML = '<div class="time-empty"><div class="big">✓</div>' +
+      'Nothing completed in this period.<br>' +
+      'Tasks you tick off in the Day or Week plan show up here.</div>';
+    return;
+  }
+
+  // группировка по дате, свежие сверху; внутри дня — по времени выполнения
+  const byDate = {};
+  done.forEach(function (r) {
+    if (!byDate[r.date]) byDate[r.date] = [];
+    byDate[r.date].push(r);
+  });
+  const dateKeys = Object.keys(byDate).sort(function (a, b) { return a > b ? -1 : 1; });
+
+  let h = '';
+  dateKeys.forEach(function (dk) {
+    const recs = byDate[dk].slice().sort(function (a, b) {
+      return (b.doneAt || 0) - (a.doneAt || 0);
+    });
+    const dp = dk.split('-');
+    const dObj = new Date(+dp[0], +dp[1]-1, +dp[2]);
+    h += '<div class="time-day-group">';
+    h += '<div class="time-day-label">' +
+      '<span>' + capitalize(WD_SH[dObj.getDay()]) + ', ' +
+        dObj.getDate() + ' ' + MON_FULL[dObj.getMonth()] + '</span>' +
+      '<span class="dlabel-count">' + recs.length + ' done</span></div>';
+    recs.forEach(function (r) {
+      const p = state.projects.find(function (x) { return x.num === r.projectNum; });
+      const s = p ? sphereById(p.sphere) : null;
+      const taskName = (r.snapshot && r.snapshot.name) ? r.snapshot.name : 'Task';
+      const color = s ? s.color : '#9a7b30';
+      const projLabel = p
+        ? (s ? s.name + ' · ' : '') + p.short
+        : 'Project deleted';
+      h += '<div class="done-entry">' +
+        '<span class="done-check">✓</span>' +
+        '<div class="done-entry-body">' +
+          '<div class="done-entry-task">' + escapeHtml(taskName) + '</div>' +
+          '<div class="done-entry-meta">' +
+            '<span class="done-entry-proj" style="background:' + color + '">' +
+              escapeHtml(projLabel) + '</span>' +
+          '</div>' +
+        '</div>' +
+        (r.doneAt ? '<span class="done-entry-time">' + fmtTimeShort(r.doneAt) + '</span>' : '') +
+      '</div>';
     });
     h += '</div>';
   });
