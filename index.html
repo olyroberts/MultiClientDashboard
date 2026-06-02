@@ -69,6 +69,31 @@
   .savebar button:hover { border-color: var(--gold); color: var(--text); }
   .savebar button.danger:hover { border-color: #a33636; color: #a33636; }
 
+  /* подсказки на Export / Import / Reset */
+  .tip-wrap { position: relative; display: inline-flex; }
+  .tip-wrap[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+    width: max-content; max-width: 240px;
+    background: #3a3128; color: #f5ecd9;
+    font-size: 11.5px; line-height: 1.4; text-align: left;
+    padding: 8px 11px; border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    opacity: 0; visibility: hidden; transition: opacity 0.14s, visibility 0.14s;
+    pointer-events: none; z-index: 60; white-space: normal;
+  }
+  .tip-wrap[data-tip]::before {
+    content: ''; position: absolute; left: 50%; bottom: calc(100% + 3px);
+    transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: #3a3128;
+    opacity: 0; visibility: hidden; transition: opacity 0.14s, visibility 0.14s;
+    pointer-events: none; z-index: 60;
+  }
+  .tip-wrap:hover::after, .tip-wrap:hover::before,
+  .tip-wrap:focus-within::after, .tip-wrap:focus-within::before {
+    opacity: 1; visibility: visible;
+  }
+
 
   /* ---- Полоса таймера (сквозная) ---- */
   .timerbar {
@@ -264,15 +289,17 @@
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     margin-bottom: 16px;
   }
+  .ov-toolbar-spacer { flex: 1; }
   .ov-mode-btn {
-    font-family: inherit; font-size: 12.5px; font-weight: 600;
-    padding: 8px 16px; border-radius: 8px; cursor: pointer;
-    border: 1.5px solid #d8730f; background: #fff3e6; color: #c0640a;
-    transition: all 0.12s;
+    font-family: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 9px 18px; border-radius: 9px; cursor: pointer; flex-shrink: 0;
+    border: none; background: var(--gold); color: #fff;
+    transition: all 0.12s; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
   }
-  .ov-mode-btn:hover { background: #ffe8d1; border-color: #c0640a; }
-  .ov-mode-btn.on { background: #d8730f; color: #fff; border-color: #d8730f; }
-  .ov-mode-btn.on { background: var(--gold); color: #fff; border-color: var(--gold); }
+  .ov-mode-btn:hover { background: #b08d2e; }
+  .ov-mode-btn:active { transform: translateY(1px); }
+  .ov-mode-btn.on { background: #1d6b51; border-color: #1d6b51; }
+  .ov-mode-btn.on:hover { background: #185a44; }
   .ov-hint { font-size: 11.5px; color: var(--text-faint); }
 
   .edit-icon-btn {
@@ -435,6 +462,11 @@
   }
   .proj-goal { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
   .proj-goal.empty { color: var(--text-faint); font-style: italic; }
+  .proj-head-meta {
+    margin-top: 14px; font-size: 12.5px; color: var(--text-dim);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+  }
+  .proj-head-meta .phm-dot { color: var(--text-faint); margin: 0 4px; }
   .proj-head-edit {
     margin-top: 14px; padding-top: 14px;
     border-top: 1px dashed var(--line);
@@ -447,6 +479,44 @@
     transition: all 0.12s;
   }
   .proj-head-edit button:hover { border-color: var(--gold); color: var(--text); }
+
+  /* инлайн-правка шапки проекта (кнопка на плашке + форма) */
+  .pht-spacer { flex: 1; }
+  .proj-head-edit-btn {
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    padding: 6px 13px; border-radius: 7px; cursor: pointer; flex-shrink: 0;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text-dim);
+    transition: all 0.12s; white-space: nowrap;
+  }
+  .proj-head-edit-btn:hover { border-color: var(--gold); color: var(--text); }
+  .proj-head-edit-btn.on { background: #1d6b51; color: #fff; border-color: #1d6b51; }
+  .proj-head-form { margin-top: 14px; display: flex; flex-direction: column; gap: 4px; }
+  .proj-head-form label {
+    font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+    color: var(--text-faint); margin-top: 8px;
+  }
+  .proj-head-form input, .proj-head-form textarea, .proj-head-form select {
+    font-family: inherit; font-size: 14px; width: 100%; box-sizing: border-box;
+    padding: 9px 11px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  }
+  .proj-head-form textarea { resize: vertical; line-height: 1.5; }
+  .proj-head-form .phf-row { display: flex; gap: 10px; }
+  .proj-head-form .phf-row > div { flex: 1; }
+  .proj-head-form .phf-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .proj-head-form .phf-save {
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 9px 18px; border-radius: 8px; border: none;
+    background: #1d6b51; color: #fff; transition: all 0.12s;
+  }
+  .proj-head-form .phf-save:hover { background: #185a44; }
+  .proj-head-form .phf-cancel {
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    padding: 9px 16px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text-dim);
+    transition: all 0.12s;
+  }
+  .proj-head-form .phf-cancel:hover { border-color: var(--gold); color: var(--text); }
 
   /* счётчик прогресса */
   .proj-progress {
@@ -464,6 +534,7 @@
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 6px;
   }
+  .tasks-section-head .tsh-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
   .tasks-section-head h3 { font-size: 15px; font-weight: 600; }
   .tasks-section-head .t-count { font-size: 11.5px; color: var(--text-faint); }
   .tasks-section-hint { font-size: 11.5px; color: var(--text-faint); margin-bottom: 14px; }
@@ -634,23 +705,47 @@
   .task-edit-bar select:focus { outline: none; border-color: var(--gold); }
   .task-edit-bar .te-spacer { flex: 1; }
 
-  /* строка добавления задачи */
-  .task-add-box {
-    background: var(--surface-2); border: 1px dashed var(--line);
-    border-radius: 10px; padding: 13px 14px; margin-top: 8px;
+  /* заливная кнопка добавления задачи (в шапке секции) */
+  .add-task-btn {
+    font-family: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 9px 18px; border-radius: 9px; cursor: pointer;
+    border: none; background: var(--gold); color: #fff;
+    white-space: nowrap; transition: all 0.12s; flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
   }
-  .task-add-box .tab-title {
-    font-size: 12px; color: var(--text-dim); margin-bottom: 8px; font-weight: 500;
+  .add-task-btn:hover { background: #b08d2e; }
+  .add-task-btn:active { transform: translateY(1px); }
+  /* пер-задачная кнопка Edit / Save */
+  .task-edit-toggle {
+    font-family: inherit; font-size: 11px; font-weight: 500;
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; flex-shrink: 0;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text-dim);
+    white-space: nowrap; transition: all 0.12s; align-self: flex-start; margin-top: 1px;
   }
-  .task-add-box .add-row { margin-top: 0; }
-  .task-add-box select {
-    font-family: inherit; font-size: 12.5px;
-    padding: 8px 10px; border-radius: 7px;
+  .task-edit-toggle:hover { border-color: var(--gold); color: var(--text); }
+  .task-edit-toggle.on { background: #1d6b51; color: #fff; border-color: #1d6b51; }
+  .task-card.t-editing { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+  .task-noname { color: var(--text-faint); font-style: italic; }
+  .task-name-input {
+    font-family: inherit; font-size: 14px; font-weight: 500; width: 100%;
+    box-sizing: border-box; padding: 7px 10px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  }
+  .task-hint-input {
+    font-family: inherit; font-size: 12px; width: 100%; box-sizing: border-box;
+    padding: 6px 10px; border-radius: 7px; margin-top: 6px;
     border: 1px solid var(--line); background: var(--surface); color: var(--text-dim);
-    cursor: pointer;
   }
-  .task-add-box select:focus { outline: none; border-color: var(--gold); }
+  .subs-edit-label {
+    font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 2px;
+  }
+  .teb-lbl {
+    font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase;
+    color: var(--text-faint);
+  }
 
+  /* строка добавления задачи */
   .tasks-empty {
     text-align: center; padding: 30px 20px;
     color: var(--text-faint); font-size: 13px;
@@ -871,7 +966,7 @@
     transition: all 0.12s; flex-shrink: 0;
   }
   .cal-today-btn:hover { border-color: var(--gold); color: var(--text); }
-  .cal-today-btn.hidden { display: none; }
+  .cal-today-btn.hidden { visibility: hidden; }
 
   .cal-summary {
     font-size: 12px; color: var(--text-dim); margin-bottom: 14px;
@@ -1012,7 +1107,41 @@
     transition: all 0.12s; flex-shrink: 0;
   }
   .day-today-btn:hover { border-color: var(--gold); color: var(--text); }
-  .day-today-btn.hidden { display: none; }
+  .day-today-btn.hidden { visibility: hidden; }
+
+  /* ===== сегментный ввод даты в навигации (день/неделя/календарь) ===== */
+  .hidden { display: none; }
+  .nav-label-click { cursor: pointer; border-radius: 7px; padding: 2px 6px; transition: background 0.12s; }
+  .nav-label-click:hover { background: var(--surface-2); }
+  .nav-date-edit { flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; position: relative; }
+  .nav-date-fields {
+    display: inline-flex; align-items: center; gap: 2px;
+    border: 1px solid var(--gold); border-radius: 7px;
+    padding: 4px 8px; background: var(--surface);
+  }
+  .ndf-seg {
+    font-family: inherit; font-size: 14px; text-align: center;
+    border: none; background: transparent; color: var(--text);
+    padding: 2px 0;
+  }
+  .ndf-seg:focus { outline: none; background: #f3e6c4; border-radius: 4px; }
+  .ndf-seg::placeholder { color: var(--text-faint); }
+  .ndf-dd, .ndf-mm { width: 26px; }
+  .ndf-yyyy { width: 42px; }
+  .ndf-sep { color: var(--text-faint); font-size: 14px; }
+  .nav-cal-btn {
+    font-family: inherit; font-size: 15px; line-height: 1;
+    width: 32px; height: 32px; padding: 0; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text-dim);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.12s; flex-shrink: 0;
+  }
+  .nav-cal-btn:hover { border-color: var(--gold); }
+  .nav-native-date {
+    position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+    width: 1px; height: 1px;
+    opacity: 0; pointer-events: none; border: 0; padding: 0; margin: 0;
+  }
 
   .day-summary {
     font-size: 12px; color: var(--text-dim);
@@ -1183,7 +1312,7 @@
     transition: all 0.12s; flex-shrink: 0;
   }
   .week-today-btn:hover { border-color: var(--gold); color: var(--text); }
-  .week-today-btn.hidden { display: none; }
+  .week-today-btn.hidden { visibility: hidden; }
 
   .week-summary {
     font-size: 12px; color: var(--text-dim);
@@ -1348,6 +1477,19 @@ input:focus,textarea:focus,select:focus{
  border-color:#2563eb!important;
  box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
+/* сегменты ввода даты в навигации — компактный вид как задумано, вне общего стиля input */
+.nav-date-fields .ndf-seg{
+ border:none!important; border-radius:4px!important; background:transparent!important;
+ box-shadow:none!important;
+}
+.nav-date-fields .ndf-seg:focus{
+ border:none!important; background:#f3e6c4!important;
+ box-shadow:none!important;
+}
+.nav-date-edit .nav-native-date{
+ border:0!important; border-radius:0!important; background:transparent!important;
+ box-shadow:none!important;
+}
 .modal{
  border-radius:18px!important;
 }
@@ -1376,8 +1518,8 @@ input:focus,textarea:focus,select:focus{
  color:#fff!important;
 }
 .ov-mode-btn.on{
- background:#d8730f!important;
- border-color:#d8730f!important;
+ background:#1d6b51!important;
+ border-color:#1d6b51!important;
  color:#fff!important;
 }
 
@@ -1409,15 +1551,21 @@ input:focus,textarea:focus,select:focus{
 
   <div class="savebar">
     <span class="status" id="save-status">Saved</span>
-    <button onclick="exportData()">Export</button>
-    <button onclick="importData()">Import</button>
-    <button class="danger" onclick="resetData()">Reset</button>
+    <span class="tip-wrap" data-tip="Download a backup file (JSON) with all your clients, projects and tasks. Keep it safe — you can restore from it later with Import.">
+      <button onclick="exportData()">Export</button>
+    </span>
+    <span class="tip-wrap" data-tip="Load a backup file you saved earlier with Export. This replaces your current data with the file's contents.">
+      <button onclick="importData()">Import</button>
+    </span>
+    <span class="tip-wrap" data-tip="Erase everything and start fresh. Export a backup first if you might want your data back.">
+      <button class="danger" onclick="resetData()">Reset</button>
+    </span>
   </div>
 
   <div class="tabs">
-    <button class="tab active" data-tab="week"     onclick="showTab('week')">Week</button>
-    <button class="tab"        data-tab="day"      onclick="showTab('day')">Day</button>
-    <button class="tab"        data-tab="overview" onclick="showTab('overview')">Clients</button>
+    <button class="tab active" data-tab="overview" onclick="showTab('overview')">Clients Overview</button>
+    <button class="tab"        data-tab="day"      onclick="showTab('day')">Daily Plan</button>
+    <button class="tab"        data-tab="week"     onclick="showTab('week')">Weekly Plan</button>
     <button class="tab"        data-tab="calendar" onclick="showTab('calendar')">Calendar</button>
     <button class="tab"        data-tab="time"     onclick="showTab('time')">Log</button>
   </div>
@@ -1426,12 +1574,30 @@ input:focus,textarea:focus,select:focus{
   <div class="tab-page" id="page-week">
     <div class="week-nav">
       <button class="week-nav-btn" onclick="weekShift(-1)" title="Previous week">‹</button>
-      <div class="week-nav-label">
+      <div class="week-nav-label nav-label-click" id="week-label" onclick="openWeekDatePicker()" title="Click to pick or type a date">
         <div class="wn-range" id="week-range">—</div>
         <div class="wn-sub" id="week-sub"></div>
       </div>
-      <button class="week-nav-btn" onclick="weekShift(1)" title="Next week">›</button>
+      <div class="nav-date-edit hidden" id="week-date-edit" style="display:none;">
+        <span class="nav-date-fields">
+          <input type="text" inputmode="numeric" maxlength="2" class="ndf-seg ndf-dd" id="week-dd"
+            placeholder="DD" oninput="onSegInput('week','dd')" onkeydown="onSegKey(event,'week','dd')"
+            onfocus="this.select()">
+          <span class="ndf-sep">/</span>
+          <input type="text" inputmode="numeric" maxlength="2" class="ndf-seg ndf-mm" id="week-mm"
+            placeholder="MM" oninput="onSegInput('week','mm')" onkeydown="onSegKey(event,'week','mm')"
+            onfocus="this.select()">
+          <span class="ndf-sep">/</span>
+          <input type="text" inputmode="numeric" maxlength="4" class="ndf-seg ndf-yyyy" id="week-yyyy"
+            placeholder="YYYY" oninput="onSegInput('week','yyyy')" onkeydown="onSegKey(event,'week','yyyy')"
+            onfocus="this.select()">
+        </span>
+        <button type="button" class="nav-cal-btn" title="Open calendar"
+          onmousedown="event.preventDefault()" onclick="showWeekPicker()">📅</button>
+        <input type="date" class="nav-native-date" id="week-date-input" onchange="onNativeWeekPick(this.value)">
+      </div>
       <button class="week-today-btn" id="week-today-btn" onclick="weekToday()">This week</button>
+      <button class="week-nav-btn" onclick="weekShift(1)" title="Next week">›</button>
     </div>
     <div class="week-toolbar">
       <button class="ov-mode-btn" id="week-order-btn" onclick="toggleWeekOrder()">↕ Reorder tiles</button>
@@ -1445,12 +1611,30 @@ input:focus,textarea:focus,select:focus{
   <div class="tab-page" id="page-day">
     <div class="day-nav">
       <button class="day-nav-btn" onclick="dayShift(-1)" title="Yesterday">‹</button>
-      <div class="day-nav-label">
+      <div class="day-nav-label nav-label-click" id="day-label" onclick="openDayDatePicker()" title="Click to pick or type a date">
         <div class="dn-date" id="day-date">—</div>
         <div class="dn-sub" id="day-sub"></div>
       </div>
-      <button class="day-nav-btn" onclick="dayShift(1)" title="Tomorrow">›</button>
+      <div class="nav-date-edit hidden" id="day-date-edit" style="display:none;">
+        <span class="nav-date-fields">
+          <input type="text" inputmode="numeric" maxlength="2" class="ndf-seg ndf-dd" id="day-dd"
+            placeholder="DD" oninput="onSegInput('day','dd')" onkeydown="onSegKey(event,'day','dd')"
+            onfocus="this.select()">
+          <span class="ndf-sep">/</span>
+          <input type="text" inputmode="numeric" maxlength="2" class="ndf-seg ndf-mm" id="day-mm"
+            placeholder="MM" oninput="onSegInput('day','mm')" onkeydown="onSegKey(event,'day','mm')"
+            onfocus="this.select()">
+          <span class="ndf-sep">/</span>
+          <input type="text" inputmode="numeric" maxlength="4" class="ndf-seg ndf-yyyy" id="day-yyyy"
+            placeholder="YYYY" oninput="onSegInput('day','yyyy')" onkeydown="onSegKey(event,'day','yyyy')"
+            onfocus="this.select()">
+        </span>
+        <button type="button" class="nav-cal-btn" title="Open calendar"
+          onmousedown="event.preventDefault()" onclick="showDayPicker()">📅</button>
+        <input type="date" class="nav-native-date" id="day-date-input" onchange="onNativeDayPick(this.value)">
+      </div>
       <button class="day-today-btn" id="day-today-btn" onclick="dayToday()">Today</button>
+      <button class="day-nav-btn" onclick="dayShift(1)" title="Tomorrow">›</button>
     </div>
     <div class="day-summary" id="day-summary"></div>
     <div id="day-body"></div>
@@ -1460,12 +1644,26 @@ input:focus,textarea:focus,select:focus{
   <div class="tab-page" id="page-calendar">
     <div class="cal-nav">
       <button class="cal-nav-btn" onclick="calShift(-1)" title="Previous month">‹</button>
-      <div class="cal-nav-label">
+      <div class="cal-nav-label nav-label-click" id="cal-label" onclick="openCalDatePicker()" title="Click to pick or type a month">
         <div class="cn-month" id="cal-month">—</div>
         <div class="cn-sub" id="cal-sub"></div>
       </div>
-      <button class="cal-nav-btn" onclick="calShift(1)" title="Next month">›</button>
+      <div class="nav-date-edit hidden" id="cal-date-edit" style="display:none;">
+        <span class="nav-date-fields">
+          <input type="text" inputmode="numeric" maxlength="2" class="ndf-seg ndf-mm" id="cal-mm"
+            placeholder="MM" oninput="onCalSegInput('mm')" onkeydown="onCalSegKey(event,'mm')"
+            onfocus="this.select()">
+          <span class="ndf-sep">/</span>
+          <input type="text" inputmode="numeric" maxlength="4" class="ndf-seg ndf-yyyy" id="cal-yyyy"
+            placeholder="YYYY" oninput="onCalSegInput('yyyy')" onkeydown="onCalSegKey(event,'yyyy')"
+            onfocus="this.select()">
+        </span>
+        <button type="button" class="nav-cal-btn" title="Open calendar"
+          onmousedown="event.preventDefault()" onclick="showCalPicker()">📅</button>
+        <input type="date" class="nav-native-date" id="cal-date-input" onchange="onNativeCalPick(this.value)">
+      </div>
       <button class="cal-today-btn" id="cal-today-btn" onclick="calToday()">This month</button>
+      <button class="cal-nav-btn" onclick="calShift(1)" title="Next month">›</button>
     </div>
     <div class="cal-summary" id="cal-summary"></div>
     <div id="cal-grid-wrap"></div>
@@ -1475,8 +1673,9 @@ input:focus,textarea:focus,select:focus{
   <!-- CLIENTS -->
   <div class="tab-page" id="page-overview">
     <div class="overview-toolbar">
-      <button class="ov-mode-btn" id="ov-mode-btn" onclick="toggleEditMode()">✎ Edit structure</button>
       <span class="ov-hint" id="ov-hint"></span>
+      <span class="ov-toolbar-spacer"></span>
+      <button class="ov-mode-btn" id="ov-mode-btn" onclick="toggleEditMode()">✎ Edit structure</button>
     </div>
     <div class="sphere-filter" id="sphere-filter"></div>
     <div id="overview-body"></div>
@@ -1518,9 +1717,8 @@ input:focus,textarea:focus,select:focus{
 <div class="proj-overlay" id="proj-overlay">
   <div class="proj-inner">
     <div class="proj-topbar">
-      <button class="proj-back" onclick="closeProject()">← Back to clients</button>
+      <button class="proj-back" onclick="closeProject()">← Back to clients overview</button>
       <div class="spacer"></div>
-      <button class="proj-edit-toggle" id="proj-edit-toggle" onclick="toggleProjEdit()">✎ Edit</button>
     </div>
     <div id="proj-content"></div>
   </div>
@@ -1687,7 +1885,14 @@ function defaultState() {
 function normalizeTask(t) {
   if (typeof t.date !== 'string') t.date = '';
   if (typeof t.time !== 'string') t.time = '';
-  if (typeof t.rhythm !== 'string') t.rhythm = (t.type === 'rep' ? 'daily' : '');
+  if (typeof t.repFrom !== 'string') t.repFrom = '';
+  if (t.type === 'rep') {
+    if (REP_RHYTHMS.indexOf(t.rhythm) === -1) t.rhythm = 'daily';
+    // для не-ежедневных нужен якорь; если его нет — ставим сегодня
+    if (t.rhythm !== 'daily' && !t.repFrom) t.repFrom = todayISO();
+  } else {
+    t.rhythm = '';
+  }
   if (['crit','imp','norm'].indexOf(t.priority) === -1) t.priority = 'norm';
   if (!Array.isArray(t.subs)) t.subs = [];
   if (!t.tid) t.tid = genId();
@@ -2101,7 +2306,7 @@ function toggleEditMode() {
   const btn = document.getElementById('ov-mode-btn');
   const hint = document.getElementById('ov-hint');
   btn.classList.toggle('on', editMode);
-  btn.textContent = editMode ? '✓ Done' : '✎ Edit structure';
+  btn.textContent = editMode ? '✓ Save' : '✎ Edit structure';
   hint.textContent = editMode
     ? 'Rename, add, delete, move with ▲▼'
     : '';
@@ -2541,9 +2746,11 @@ function runCustomModalAction(i) {
 
 // ===== СТРАНИЦА ПРОЕКТА =====
 let currentProjectNum = null;   // открытый проект
-let projEditMode = false;       // режим правки внутри проекта
+let projEditMode = false;       // (устар.) общий режим правки внутри проекта
+let headerEditMode = false;     // инлайн-правка шапки проекта
 let openSubsFor = {};           // какие задачи раскрыты {taskIdx:true}
 let openDateFor = {};           // у каких задач открыт выбор даты {taskIdx:true}
+let taskEditMode = {};          // какие задачи в режиме правки {tid:true}
 
 const TASK_TYPES = [
   { id: 'rep',  label: 'Recurring', short: 'recurring',  cls: 'rep'  },
@@ -2573,6 +2780,70 @@ function currentProject() {
 // ----- форматирование даты -----
 const WD_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MON_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ----- ритмы повторяющихся задач -----
+const REP_RHYTHMS = ['daily','weekly','monthly','quarterly','halfyearly','yearly'];
+const RHYTHM_INFO = [
+  { id: 'daily',      label: 'Every day',      chip: '↻ every day' },
+  { id: 'weekly',     label: 'Every week',     chip: '↻ weekly' },
+  { id: 'monthly',    label: 'Every month',    chip: '↻ monthly' },
+  { id: 'quarterly',  label: 'Every 3 months', chip: '↻ quarterly' },
+  { id: 'halfyearly', label: 'Every 6 months', chip: '↻ every 6 mo' },
+  { id: 'yearly',     label: 'Every year',     chip: '↻ yearly' }
+];
+function rhythmInfo(id) {
+  return RHYTHM_INFO.find(function (r) { return r.id === id; }) || RHYTHM_INFO[0];
+}
+// ISO -> Date (локальная полночь)
+function isoToDate(iso) {
+  const p = iso.split('-');
+  return new Date(+p[0], +p[1] - 1, +p[2]);
+}
+// последний день месяца (year, month0)
+function lastDayOfMonth(year, month0) {
+  return new Date(year, month0 + 1, 0).getDate();
+}
+// выпадает ли повторяющаяся задача на дату dateISO?
+function repOccursOn(t, dateISO) {
+  if (t.type !== 'rep') return false;
+  const rhythm = t.rhythm || 'daily';
+  if (rhythm === 'daily') return true;
+  const anchor = t.repFrom;
+  if (!anchor) return false;
+  const a = isoToDate(anchor);
+  const d = isoToDate(dateISO);
+  if (isNaN(a.getTime()) || isNaN(d.getTime())) return false;
+  if (d < a) return false;   // не раньше якоря
+  if (rhythm === 'weekly') {
+    if (d.getDay() !== a.getDay()) return false;
+    const days = Math.round((d - a) / 86400000);
+    return days % 7 === 0;
+  }
+  // месячные ритмы: monthly=1, quarterly=3, halfyearly=6, yearly=12
+  const step = rhythm === 'monthly' ? 1
+    : rhythm === 'quarterly' ? 3
+    : rhythm === 'halfyearly' ? 6
+    : rhythm === 'yearly' ? 12 : 0;
+  if (!step) return false;
+  const monthsApart = (d.getFullYear() - a.getFullYear()) * 12 + (d.getMonth() - a.getMonth());
+  if (monthsApart < 0 || monthsApart % step !== 0) return false;
+  const targetDay = Math.min(a.getDate(), lastDayOfMonth(d.getFullYear(), d.getMonth()));
+  return d.getDate() === targetDay;
+}
+// выпадает ли rep хотя бы на один день диапазона [firstISO..lastISO]?
+function repInRange(t, firstISO, lastISO) {
+  if (t.type !== 'rep') return false;
+  if ((t.rhythm || 'daily') === 'daily') return true;
+  const first = isoToDate(firstISO), last = isoToDate(lastISO);
+  for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+    const iso = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    if (repOccursOn(t, iso)) return true;
+  }
+  return false;
+}
+
 function todayISO() {
   const d = new Date();
   return d.getFullYear() + '-' +
@@ -2664,6 +2935,7 @@ function openProject(num) {
   if (!p) return;
   currentProjectNum = num;
   projEditMode = false;
+  headerEditMode = false;
   openSubsFor = {};
   openDateFor = {};
   // по умолчанию раскрываем задачи с незавершёнными подзадачами
@@ -2683,6 +2955,7 @@ function closeProject() {
   document.body.style.overflow = '';
   currentProjectNum = null;
   projEditMode = false;
+  headerEditMode = false;
   renderOverview();   // обновим статистику на плитках
   renderWeek();       // изменения дат/приоритетов отразятся в Неделе
   renderDay();        // и в Дне
@@ -2691,9 +2964,43 @@ function closeProject() {
 function toggleProjEdit() {
   projEditMode = !projEditMode;
   const btn = document.getElementById('proj-edit-toggle');
-  btn.classList.toggle('on', projEditMode);
-  btn.textContent = projEditMode ? '✓ Done' : '✎ Edit';
+  if (btn) {
+    btn.classList.toggle('on', projEditMode);
+    btn.textContent = projEditMode ? '✓ Done' : '✎ Edit';
+  }
   if (!projEditMode) openDateFor = {};
+  renderProject();
+}
+
+// ----- инлайн-правка шапки проекта -----
+function toggleHeaderEdit() {
+  headerEditMode = !headerEditMode;
+  renderProject();
+}
+function saveHeaderEdit() {
+  const p = currentProject();
+  if (!p) { headerEditMode = false; renderProject(); return; }
+  const titleEl   = document.getElementById('ph-title');
+  const shortEl   = document.getElementById('ph-short');
+  const goalEl    = document.getElementById('ph-goal');
+  const nextEl    = document.getElementById('ph-next');
+  const statusEl  = document.getElementById('ph-status');
+  const payEl     = document.getElementById('ph-payment');
+  const waitEl    = document.getElementById('ph-waiting');
+  const dueEl     = document.getElementById('ph-due');
+  const keyEl     = document.getElementById('ph-key');
+  if (titleEl) p.title = titleEl.value.trim() || p.title;
+  if (shortEl) p.short = shortEl.value.trim() || p.short;
+  if (goalEl)  p.goal  = goalEl.value.trim();
+  if (nextEl)  p.nextAction = nextEl.value.trim();
+  if (statusEl && STAGE_IDS.indexOf(statusEl.value) !== -1) p.status = statusEl.value;
+  if (payEl && PAYMENT_IDS.indexOf(payEl.value) !== -1) p.payment = payEl.value;
+  if (waitEl) p.waiting = (waitEl.value === 'me' || waitEl.value === 'client') ? waitEl.value : '';
+  if (dueEl)  p.dueDate = (dueEl.value || '').trim();
+  if (keyEl)  p.isKey = (keyEl.value === 'yes');
+  touchProject(p);
+  headerEditMode = false;
+  saveState(true);
   renderProject();
 }
 
@@ -2715,54 +3022,103 @@ function renderProject() {
   if (p.isKey) h += '<span class="proj-key-tag">key project</span>';
   var pst = stageOf(p.status);
   h += '<span class="proj-status-tag ' + pst.cls + '">' + pst.label + '</span>';
+  h += '<span class="pht-spacer"></span>';
+  h += '<button class="proj-head-edit-btn' + (headerEditMode ? ' on' : '') +
+    '" onclick="' + (headerEditMode ? 'saveHeaderEdit()' : 'toggleHeaderEdit()') + '">' +
+    (headerEditMode ? '✓ Save' : '✎ Edit') + '</button>';
   h += '</div>';
-  h += '<div class="proj-title">' + escapeHtml(p.title) + '</div>';
-  h += '<div class="proj-goal-label">Project goal</div>';
-  if (p.goal) {
-    h += '<div class="proj-goal">' + escapeHtml(p.goal) + '</div>';
-  } else {
-    h += '<div class="proj-goal empty">No goal set yet.</div>';
-  }
-  if (st.subs > 0) {
-    const pct = Math.round(st.subsDone / st.subs * 100);
-    h += '<div class="proj-progress">' +
-      '<span>Subtasks: ' + st.subsDone + ' / ' + st.subs + '</span>' +
-      '<span class="proj-progress-bar"><span class="proj-progress-fill" style="width:' +
-        pct + '%;background:' + color + '"></span></span>' +
-      '<span>' + pct + '%</span></div>';
-  }
-  if (projEditMode) {
-    const wlabel = p.waiting === 'me' ? 'Waiting on me'
-                 : p.waiting === 'client' ? 'Waiting on client'
-                 : 'Not waiting';
-    const nlabel = p.nextAction ? p.nextAction : 'Set next action';
-    h += '<div class="proj-head-edit">' +
-      '<button onclick="editProjectFromPage()">✎ Name &amp; goal</button>' +
-      '<button onclick="editStageFromPage()">◴ Stage: ' + escapeHtml(stageOf(p.status).label) + '</button>' +
-      '<button onclick="editDueFromPage()">📅 ' + (p.dueDate ? escapeHtml(fmtDateHuman(p.dueDate)) : 'Set due date') + '</button>' +
-      '<button onclick="editWaitingFromPage()">⏳ ' + escapeHtml(wlabel) + '</button>' +
-      '<button onclick="editPaymentFromPage()">£ ' + escapeHtml(paymentOf(p.payment).label) + '</button>' +
-      '<button onclick="editNextActionFromPage()">→ ' + escapeHtml(nlabel) + '</button>' +
+
+  if (headerEditMode) {
+    // ----- инлайн-форма: имя/цель + все поля проекта -----
+    let stageOpts = '';
+    STAGES.forEach(function (sg) {
+      stageOpts += '<option value="' + sg.id + '"' +
+        (p.status === sg.id ? ' selected' : '') + '>' + escapeHtml(sg.label) + '</option>';
+    });
+    let payOpts = '';
+    PAYMENTS.forEach(function (pm) {
+      payOpts += '<option value="' + pm.id + '"' +
+        ((p.payment || 'none') === pm.id ? ' selected' : '') + '>' + escapeHtml(pm.label) + '</option>';
+    });
+    const waitOpts =
+      '<option value=""' + (!p.waiting ? ' selected' : '') + '>No one — it’s moving</option>' +
+      '<option value="me"' + (p.waiting === 'me' ? ' selected' : '') + '>Waiting on me</option>' +
+      '<option value="client"' + (p.waiting === 'client' ? ' selected' : '') + '>Waiting on client</option>';
+    h += '<div class="proj-head-form">' +
+      '<label>Full name</label>' +
+      '<input type="text" id="ph-title" value="' + escapeHtml(p.title) + '">' +
+      '<label>Short name (for the tile)</label>' +
+      '<input type="text" id="ph-short" value="' + escapeHtml(p.short) + '">' +
+      '<label>Project goal</label>' +
+      '<textarea id="ph-goal" rows="3">' + escapeHtml(p.goal || '') + '</textarea>' +
+      '<label>Next action</label>' +
+      '<input type="text" id="ph-next" value="' + escapeHtml(p.nextAction || '') + '" placeholder="The next concrete step">' +
+      '<div class="phf-row">' +
+        '<div><label>Stage</label>' +
+          '<select id="ph-status">' + stageOpts + '</select></div>' +
+        '<div><label>Payment</label>' +
+          '<select id="ph-payment">' + payOpts + '</select></div>' +
+      '</div>' +
+      '<div class="phf-row">' +
+        '<div><label>Waiting on</label>' +
+          '<select id="ph-waiting">' + waitOpts + '</select></div>' +
+        '<div><label>Due date</label>' +
+          '<input type="date" id="ph-due" value="' + escapeHtml(p.dueDate || '') + '"></div>' +
+      '</div>' +
+      '<div class="phf-row">' +
+        '<div><label>Key project?</label>' +
+          '<select id="ph-key"><option value="no"' + (!p.isKey ? ' selected' : '') + '>No</option>' +
+          '<option value="yes"' + (p.isKey ? ' selected' : '') + '>Yes</option></select></div>' +
+        '<div></div>' +
+      '</div>' +
+      '<div class="phf-actions">' +
+        '<button class="phf-save" onclick="saveHeaderEdit()">✓ Save</button>' +
+        '<button class="phf-cancel" onclick="toggleHeaderEdit()">Cancel</button>' +
+      '</div>' +
       '</div>';
+  } else {
+    h += '<div class="proj-title">' + escapeHtml(p.title) + '</div>';
+    h += '<div class="proj-goal-label">Project goal</div>';
+    if (p.goal) {
+      h += '<div class="proj-goal">' + escapeHtml(p.goal) + '</div>';
+    } else {
+      h += '<div class="proj-goal empty">No goal set yet.</div>';
+    }
+    if (st.subs > 0) {
+      const pct = Math.round(st.subsDone / st.subs * 100);
+      h += '<div class="proj-progress">' +
+        '<span>Subtasks: ' + st.subsDone + ' / ' + st.subs + '</span>' +
+        '<span class="proj-progress-bar"><span class="proj-progress-fill" style="width:' +
+          pct + '%;background:' + color + '"></span></span>' +
+        '<span>' + pct + '%</span></div>';
+    }
+    // краткая сводка доменных полей в просмотре
+    let meta = [];
+    if (p.nextAction) meta.push('→ ' + escapeHtml(p.nextAction));
+    if (p.waiting === 'me') meta.push('⏳ Waiting on me');
+    else if (p.waiting === 'client') meta.push('⏳ Waiting on client');
+    if (p.dueDate) meta.push('📅 Due ' + escapeHtml(fmtDateHuman(p.dueDate)));
+    meta.push('£ ' + escapeHtml(paymentOf(p.payment).label));
+    h += '<div class="proj-head-meta">' + meta.join('<span class="phm-dot">·</span>') + '</div>';
   }
   h += '</div></div>';
 
   // ----- секция задач -----
   h += '<div class="tasks-section-head">' +
+    '<div class="tsh-left">' +
     '<h3>Tasks</h3>' +
     '<span class="t-count">' + st.total + ' ' +
       plural(st.total,'task','tasks','tasks') +
       (st.typed < st.total ? ' · ' + (st.total - st.typed) + ' no type' : '') +
-    '</span></div>';
+    '</span></div>' +
+    '<button class="add-task-btn" onclick="addTask()">+ Add task</button>' +
+    '</div>';
   h += '<div class="tasks-section-hint">' +
-    (projEditMode
-      ? 'This is the task store. Give a task a date and it appears in the week and day plan. Recurring tasks show up daily on their own. Edit type, date, order and subtasks here.'
-      : 'This is the project task store. Mark tasks done and plan time in the Week and Day tabs. Click “Edit” to change tasks.') +
+    'Tick a task to mark it done for today. Use “Edit” on a task to set its type, priority, date and subtasks.' +
     '</div>';
 
   if (!p.tasks.length) {
-    h += '<div class="tasks-empty">No tasks in this project yet.' +
-      (projEditMode ? '' : ' Click “Edit” to add one.') + '</div>';
+    h += '<div class="tasks-empty">No tasks in this project yet. Click “+ Add task” to create one.</div>';
   } else {
     TASK_TYPES.forEach(function (tt) {
       const items = [];
@@ -2781,22 +3137,6 @@ function renderProject() {
     });
   }
 
-  // ----- добавление задачи -----
-  if (projEditMode) {
-    let typeOpts = '';
-    TASK_TYPES.forEach(function (tt) {
-      typeOpts += '<option value="' + tt.id + '">' + escapeHtml(tt.label) + '</option>';
-    });
-    h += '<div class="task-add-box">' +
-      '<div class="tab-title">New task</div>' +
-      '<div class="add-row">' +
-      '<input type="text" id="new-task-name" placeholder="Task name" ' +
-        'onkeydown="if(event.key===\'Enter\')addTask()">' +
-      '<select id="new-task-type">' + typeOpts + '</select>' +
-      '<button onclick="addTask()">+ Task</button>' +
-      '</div></div>';
-  }
-
   box.innerHTML = h;
 }
 
@@ -2806,98 +3146,157 @@ function renderTaskCard(p, t, idx, gi, gcount) {
   const subsDone  = t.subs.filter(function (s){ return s.done; }).length;
   const tt = taskTypeInfo(t.type);
   const subsOpen = !!openSubsFor[idx];
-  const dateOpen = !!openDateFor[idx];
+  const doneToday = !!findDayLog(todayISO(), t.tid);   // отмечена выполненной сегодня
+  const editing = isTaskEditing(t.tid);
 
-  let h = '<div class="task-card" data-tidx="' + idx + '">';
+  let h = '<div class="task-card' + (doneToday ? ' t-done' : '') + (editing ? ' t-editing' : '') +
+    '" data-tidx="' + idx + '">';
   h += '<div class="task-main">';
+  // чекбокс выполнения (скрыт в режиме правки)
+  if (!editing) {
+    h += '<div class="task-check' + (doneToday ? ' checked' : '') + '" ' +
+      'title="' + (doneToday ? 'Done today — tap to undo' : 'Mark done for today') + '" ' +
+      'onclick="toggleDayTask(todayISO(), \'' + t.tid + '\')">' + (doneToday ? '✓' : '') + '</div>';
+  }
   h += '<div class="task-text-block">';
-  h += '<div class="task-name">';
-  const pri = priorityInfo(t.priority);
-  if (t.priority && t.priority !== 'norm') {
-    h += '<span class="task-pri" title="' + escapeHtml(pri.label) + '">' + pri.icon + '</span> ';
-  }
-  h += escapeHtml(t.name) + '</div>';
-  if (t.hint) h += '<div class="task-hint">' + escapeHtml(t.hint) + '</div>';
 
-  // строка dated и подзадачами
-  h += '<div class="task-meta-row">';
-  // плашка даты / ритма
-  if (t.type === 'rep') {
-    h += '<span class="task-date rhythm" title="Recurs — shows in the day plan automatically">' +
-      '↻ every day</span>';
-  } else if (t.date) {
-    const rel = dateRelLabel(t.date);
-    let label = fmtDateHuman(t.date);
-    if (t.time) label += ' · ' + t.time;
-    let cls = 'task-date';
-    let title = 'Scheduled';
-    if (rel === 'overdue') { title = 'Date has passed'; }
-    h += '<span class="' + cls + '" title="' + title + '">📅 ' + escapeHtml(label) +
-      (rel && rel !== 'overdue' ? ' · ' + rel : '') +
-      (rel === 'overdue' ? ' · overdue' : '') + '</span>';
-  } else if (t.type === 'once') {
-    h += '<span class="task-date unplanned" title="No date set — task not in the plan">' +
-      'no date</span>';
-  }
-  // подзадачи
-  if (subsTotal > 0) {
-    h += '<button class="subs-toggle' + (subsOpen ? ' open' : '') + '" ' +
-      'onclick="toggleSubs(' + idx + ')">' +
-      '<span class="subs-arrow">▶</span> Subtasks ' +
-      subsDone + '/' + subsTotal + '</button>';
-  } else if (projEditMode) {
-    h += '<button class="subs-toggle' + (subsOpen ? ' open' : '') + '" ' +
-      'onclick="toggleSubs(' + idx + ')">' +
-      '<span class="subs-arrow">▶</span> + add subtasks</button>';
-  }
-  h += '</div>';
-  h += '</div>';   // task-text-block
-  h += '<span class="task-type-pill ttp-' + tt.cls + '">' + escapeHtml(tt.short) + '</span>';
-  h += '</div>';   // task-main
+  if (editing) {
+    // имя задачи редактируемое
+    h += '<input type="text" class="task-name-input" id="te-name-' + t.tid + '" ' +
+      'value="' + escapeHtml(t.name) + '" placeholder="Task name" ' +
+      'oninput="setTaskName(' + idx + ',this.value)" ' +
+      'onkeydown="if(event.key===\'Enter\')saveTaskEdit(\'' + t.tid + '\')">';
+    // примечание/триггер редактируемое
+    h += '<input type="text" class="task-hint-input" ' +
+      'value="' + escapeHtml(t.hint || '') + '" placeholder="Note / trigger (optional)" ' +
+      'oninput="setTaskHint(' + idx + ',this.value)">';
+  } else {
+    h += '<div class="task-name">';
+    const pri = priorityInfo(t.priority);
+    if (t.priority && t.priority !== 'norm') {
+      h += '<span class="task-pri" title="' + escapeHtml(pri.label) + '">' + pri.icon + '</span> ';
+    }
+    h += (t.name ? escapeHtml(t.name) : '<span class="task-noname">Untitled task</span>') + '</div>';
+    if (t.hint) h += '<div class="task-hint">' + escapeHtml(t.hint) + '</div>';
 
-  // ----- блок выбора даты (режим правки, кроме повторяющихся) -----
-  if (projEditMode && dateOpen && t.type !== 'rep') {
-    h += '<div class="task-date-edit">' +
-      '<label>Date</label>' +
-      '<input type="date" value="' + escapeHtml(t.date || '') + '" ' +
-        'onchange="setTaskDate(' + idx + ',this.value)">' +
-      '<label>Time</label>' +
-      '<input type="time" value="' + escapeHtml(t.time || '') + '" ' +
-        'onchange="setTaskTime(' + idx + ',this.value)">';
-    if (t.date || t.time) {
-      h += '<button class="clear-date" onclick="clearTaskDate(' + idx + ')">Clear date</button>';
+    // строка с датой и подзадачами (только в режиме просмотра)
+    h += '<div class="task-meta-row">';
+    if (t.type === 'rep') {
+      const ri = rhythmInfo(t.rhythm);
+      let chipTitle = 'Recurring — shows in the day plan on its rhythm';
+      let chipText = ri.chip;
+      if (t.rhythm && t.rhythm !== 'daily' && t.repFrom) {
+        chipText += ' · from ' + fmtDateHuman(t.repFrom);
+      }
+      h += '<span class="task-date rhythm" title="' + chipTitle + '">' +
+        escapeHtml(chipText) + '</span>';
+    } else if (t.date) {
+      const rel = dateRelLabel(t.date);
+      let label = fmtDateHuman(t.date);
+      if (t.time) label += ' · ' + t.time;
+      let title = 'Scheduled';
+      if (rel === 'overdue') { title = 'Date has passed'; }
+      h += '<span class="task-date" title="' + title + '">📅 ' + escapeHtml(label) +
+        (rel && rel !== 'overdue' ? ' · ' + rel : '') +
+        (rel === 'overdue' ? ' · overdue' : '') + '</span>';
+    } else if (t.type === 'once') {
+      h += '<span class="task-date unplanned" title="No date set — task not in the plan">no date</span>';
+    }
+    if (subsTotal > 0) {
+      h += '<button class="subs-toggle' + (subsOpen ? ' open' : '') + '" ' +
+        'onclick="toggleSubs(' + idx + ')">' +
+        '<span class="subs-arrow">▶</span> Subtasks ' + subsDone + '/' + subsTotal + '</button>';
     }
     h += '</div>';
   }
-  if (projEditMode && dateOpen && t.type === 'rep') {
-    h += '<div class="task-date-edit">' +
-      '<span class="rhythm-note">↻ A recurring task shows in the day plan every day automatically. No date needed.</span>' +
-      '</div>';
-  }
+  h += '</div>';   // task-text-block
 
-  // ----- блок подзадач -----
-  if (subsOpen) {
+  // правая часть task-main: тип-пилюля (просмотр) или кнопка Edit/Save
+  if (!editing) {
+    h += '<span class="task-type-pill ttp-' + tt.cls + '">' + escapeHtml(tt.short) + '</span>';
+    h += '<button class="task-edit-toggle" title="Edit task" onclick="toggleTaskEdit(\'' + t.tid + '\')">✎ Edit</button>';
+  } else {
+    h += '<button class="task-edit-toggle on" title="Save task" onclick="saveTaskEdit(\'' + t.tid + '\')">✓ Save</button>';
+  }
+  h += '</div>';   // task-main
+
+  // ----- режим просмотра: раскрытый чек-лист подзадач -----
+  if (!editing && subsOpen && subsTotal > 0) {
     h += '<div class="subs-wrap">';
-    if (subsTotal === 0) {
-      h += '<div style="font-size:11.5px;color:var(--text-faint);padding:2px 0 4px;">Subtasks — a checklist of steps inside a task. They have no date of their own.</div>';
-    }
     t.subs.forEach(function (sub, si) {
       h += '<div class="sub-row' + (sub.done ? ' s-done' : '') + '">';
       h += '<div class="sub-check' + (sub.done ? ' checked' : '') + '" ' +
         'onclick="toggleSub(' + idx + ',' + si + ')">' + (sub.done ? '✓' : '') + '</div>';
       h += '<div class="sub-name">' + escapeHtml(sub.name) + '</div>';
-      if (projEditMode) {
-        h += '<div class="sub-actions">' +
-          '<button class="sub-mini-btn" title="Move up" ' + (si === 0 ? 'disabled' : '') +
-            ' onclick="moveSub(' + idx + ',' + si + ',-1)">▲</button>' +
-          '<button class="sub-mini-btn" title="Move down" ' + (si === subsTotal - 1 ? 'disabled' : '') +
-            ' onclick="moveSub(' + idx + ',' + si + ',1)">▼</button>' +
-          '<button class="sub-mini-btn" title="Rename" ' +
-            'onclick="editSub(' + idx + ',' + si + ')">✎</button>' +
-          '<button class="sub-mini-btn del" title="Delete" ' +
-            'onclick="deleteSub(' + idx + ',' + si + ')">✕</button>' +
-          '</div>';
+      h += '</div>';
+    });
+    h += '</div>';
+  }
+
+  // ===== режим правки задачи =====
+  if (editing) {
+    let typeOpts = '';
+    TASK_TYPES.forEach(function (tt2) {
+      typeOpts += '<option value="' + tt2.id + '"' +
+        ((t.type || '') === tt2.id ? ' selected' : '') + '>' +
+        escapeHtml(tt2.label) + '</option>';
+    });
+
+    // ----- верхняя строка: Type + дата/время рядом -----
+    h += '<div class="task-date-edit">' +
+      '<label>Type</label>' +
+      '<select title="Task type" onchange="setTaskType(' + idx + ',this.value)">' + typeOpts + '</select>';
+    if (t.type === 'rep') {
+      let rhythmOpts = '';
+      RHYTHM_INFO.forEach(function (r) {
+        rhythmOpts += '<option value="' + r.id + '"' +
+          ((t.rhythm || 'daily') === r.id ? ' selected' : '') + '>' +
+          escapeHtml(r.label) + '</option>';
+      });
+      h += '<label>Rhythm</label>' +
+        '<select title="How often it recurs" onchange="setTaskRhythm(' + idx + ',this.value)">' +
+        rhythmOpts + '</select>';
+      if ((t.rhythm || 'daily') !== 'daily') {
+        h += '<label>Starting from</label>' +
+          '<input type="date" value="' + escapeHtml(t.repFrom || '') + '" ' +
+            'title="Anchor date — the rhythm counts from here" ' +
+            'onchange="setTaskRepFrom(' + idx + ',this.value)">';
+        h += '<span class="rhythm-note">↻ Recurs ' + escapeHtml(rhythmInfo(t.rhythm).label.toLowerCase()) +
+          ', counted from this date. It appears in the plan on the days it falls.</span>';
+      } else {
+        h += '<span class="rhythm-note">↻ Shows in the day plan every day. No date needed.</span>';
       }
+    } else {
+      h += '<label>Date</label>' +
+        '<input type="date" value="' + escapeHtml(t.date || '') + '" ' +
+          'onchange="setTaskDate(' + idx + ',this.value)">' +
+        '<label>Time</label>' +
+        '<input type="time" value="' + escapeHtml(t.time || '') + '" ' +
+          'onchange="setTaskTime(' + idx + ',this.value)">';
+      if (t.date || t.time) {
+        h += '<button class="clear-date" onclick="clearTaskDate(' + idx + ')">Clear date</button>';
+      }
+    }
+    h += '</div>';
+
+    // подзадачи (редактируемые)
+    h += '<div class="subs-wrap">';
+    h += '<div class="subs-edit-label">Subtasks</div>';
+    t.subs.forEach(function (sub, si) {
+      h += '<div class="sub-row' + (sub.done ? ' s-done' : '') + '">';
+      h += '<div class="sub-check' + (sub.done ? ' checked' : '') + '" ' +
+        'onclick="toggleSub(' + idx + ',' + si + ')">' + (sub.done ? '✓' : '') + '</div>';
+      h += '<div class="sub-name">' + escapeHtml(sub.name) + '</div>';
+      h += '<div class="sub-actions">' +
+        '<button class="sub-mini-btn" title="Move up" ' + (si === 0 ? 'disabled' : '') +
+          ' onclick="moveSub(' + idx + ',' + si + ',-1)">▲</button>' +
+        '<button class="sub-mini-btn" title="Move down" ' + (si === subsTotal - 1 ? 'disabled' : '') +
+          ' onclick="moveSub(' + idx + ',' + si + ',1)">▼</button>' +
+        '<button class="sub-mini-btn" title="Rename" ' +
+          'onclick="editSub(' + idx + ',' + si + ')">✎</button>' +
+        '<button class="sub-mini-btn del" title="Delete" ' +
+          'onclick="deleteSub(' + idx + ',' + si + ')">✕</button>' +
+        '</div>';
       h += '</div>';
     });
     h += '<div class="sub-add-row">' +
@@ -2906,16 +3305,8 @@ function renderTaskCard(p, t, idx, gi, gcount) {
       '<button onclick="addSub(' + idx + ')">+</button>' +
       '</div>';
     h += '</div>';
-  }
 
-  // ----- панель правки задачи -----
-  if (projEditMode) {
-    let typeOpts = '';
-    TASK_TYPES.forEach(function (tt2) {
-      typeOpts += '<option value="' + tt2.id + '"' +
-        ((t.type || '') === tt2.id ? ' selected' : '') + '>' +
-        escapeHtml(tt2.label) + '</option>';
-    });
+    // ----- нижняя строка: Priority + перемещение/удаление -----
     let priOpts = '';
     PRIORITIES.forEach(function (pr) {
       priOpts += '<option value="' + pr.id + '"' +
@@ -2923,19 +3314,13 @@ function renderTaskCard(p, t, idx, gi, gcount) {
         pr.icon + ' ' + escapeHtml(pr.label) + '</option>';
     });
     h += '<div class="task-edit-bar">' +
+      '<label class="teb-lbl">Priority</label>' +
+      '<select title="Priority" onchange="setTaskPriority(' + idx + ',this.value)">' + priOpts + '</select>' +
+      '<span class="te-spacer"></span>' +
       '<button class="edit-icon-btn" title="Move up" ' + (gi === 0 ? 'disabled' : '') +
         ' onclick="moveTask(' + idx + ',-1)">▲</button>' +
       '<button class="edit-icon-btn" title="Move down" ' + (gi === gcount - 1 ? 'disabled' : '') +
         ' onclick="moveTask(' + idx + ',1)">▼</button>' +
-      '<select title="Task type" onchange="setTaskType(' + idx + ',this.value)">' +
-        typeOpts + '</select>' +
-      '<select title="Priority" onchange="setTaskPriority(' + idx + ',this.value)">' +
-        priOpts + '</select>' +
-      '<button class="edit-icon-btn' + (dateOpen ? ' on-date' : '') +
-        '" title="Date and time" onclick="toggleDateEdit(' + idx + ')">📅</button>' +
-      '<span class="te-spacer"></span>' +
-      '<button class="edit-icon-btn" title="Edit task" ' +
-        'onclick="editTask(' + idx + ')">✎</button>' +
       '<button class="edit-icon-btn del" title="Delete task" ' +
         'onclick="deleteTask(' + idx + ')">✕</button>' +
       '</div>';
@@ -2943,6 +3328,45 @@ function renderTaskCard(p, t, idx, gi, gcount) {
 
   h += '</div>';   // task-card
   return h;
+}
+
+// ----- инлайн-поля задачи в режиме правки -----
+function isTaskEditing(tid) { return !!taskEditMode[tid]; }
+function toggleTaskEdit(tid) {
+  if (taskEditMode[tid]) delete taskEditMode[tid];
+  else taskEditMode[tid] = true;
+  renderProject();
+  if (taskEditMode[tid]) {
+    setTimeout(function () {
+      const el = document.getElementById('te-name-' + tid);
+      if (el) el.focus();
+    }, 30);
+  }
+}
+function saveTaskEdit(tid) {
+  delete taskEditMode[tid];
+  saveState(true);
+  renderProject();
+}
+function setTaskName(idx, val) {
+  const p = currentProject();
+  if (!p || !p.tasks[idx]) return;
+  p.tasks[idx].name = val;
+  saveState();
+}
+function setTaskHint(idx, val) {
+  const p = currentProject();
+  if (!p || !p.tasks[idx]) return;
+  p.tasks[idx].hint = val;
+  saveState();
+}
+// сдвиг индексных карт на +1 (после вставки в начало списка)
+function shiftIdxMapUp(map) {
+  const out = {};
+  Object.keys(map).forEach(function (k) {
+    if (map[k]) out[(+k) + 1] = true;
+  });
+  return out;
 }
 
 // ----- цель / шапка проекта -----
@@ -3079,13 +3503,33 @@ function setTaskType(idx, type) {
   const t = p.tasks[idx];
   t.type = type || '';
   if (t.type === 'rep') {
-    // повторяющаяся — конкретная date не нужна, ставим ритм
-    t.rhythm = 'daily';
+    // повторяющаяся — конкретная дата не нужна; ритм по умолчанию daily
+    if (REP_RHYTHMS.indexOf(t.rhythm) === -1) t.rhythm = 'daily';
+    if (t.rhythm !== 'daily' && !t.repFrom) t.repFrom = todayISO();
     t.date = '';
     t.time = '';
   } else {
     t.rhythm = '';
   }
+  saveState(true);
+  renderProject();
+}
+
+// ----- ритм повторения -----
+function setTaskRhythm(idx, val) {
+  const p = currentProject();
+  if (!p || !p.tasks[idx]) return;
+  const t = p.tasks[idx];
+  t.rhythm = (REP_RHYTHMS.indexOf(val) !== -1) ? val : 'daily';
+  // не-ежедневным нужен якорь
+  if (t.rhythm !== 'daily' && !t.repFrom) t.repFrom = todayISO();
+  saveState(true);
+  renderProject();
+}
+function setTaskRepFrom(idx, val) {
+  const p = currentProject();
+  if (!p || !p.tasks[idx]) return;
+  p.tasks[idx].repFrom = (val || '').trim();
   saveState(true);
   renderProject();
 }
@@ -3127,23 +3571,28 @@ function clearTaskDate(idx) {
 function addTask() {
   const p = currentProject();
   if (!p) return;
-  const inp = document.getElementById('new-task-name');
-  const sel = document.getElementById('new-task-type');
-  const name = inp.value.trim();
-  if (!name) { inp.focus(); return; }
-  const type = sel ? sel.value : '';
-  p.tasks.push({
-    tid: genId(),
-    name: name, type: type, hint: '',
+  const tid = genId();
+  const newTask = {
+    tid: tid,
+    name: '', type: '', hint: '',
     date: '', time: '',
-    rhythm: type === 'rep' ? 'daily' : '',
+    rhythm: '', repFrom: '',
     priority: 'norm',
     subs: []
-  });
-  inp.value = '';
-  if (sel) sel.value = '';
+  };
+  // вставляем сверху списка
+  p.tasks.unshift(newTask);
+  // индексные карты раскрытия сдвигаются на +1
+  openSubsFor = shiftIdxMapUp(openSubsFor);
+  openDateFor = shiftIdxMapUp(openDateFor);
+  // сразу открываем новую задачу на редактирование
+  taskEditMode[tid] = true;
   saveState(true);
   renderProject();
+  setTimeout(function () {
+    const el = document.getElementById('te-name-' + tid);
+    if (el) el.focus();
+  }, 30);
 }
 function editTask(idx) {
   const p = currentProject();
@@ -3535,7 +3984,7 @@ function renderDoneBody(range, periodSub) {
   if (!done.length) {
     body.innerHTML = '<div class="time-empty"><div class="big">✓</div>' +
       'Nothing completed in this period.<br>' +
-      'Tasks you tick off in the Day or Week plan show up here.</div>';
+      'Tasks you tick off in the Daily Plan or Weekly Plan show up here.</div>';
     return;
   }
 
@@ -3659,12 +4108,24 @@ function collectMonthItems(year, month) {
   }
   const seen = {};   // dateISO::tid
 
-  // задачи of проектов (неповторяющиеся, dated)
+  // задачи of проектов (неповторяющиеся dated + повторяющиеся по дням выпадения)
   state.projects.forEach(function (p) {
     if (p.status === 'paused') return;
     (p.tasks || []).forEach(function (t) {
       normalizeTask(t);
-      if (t.type === 'rep') return;       // повторяющиеся в календаре не показываем
+      if (t.type === 'rep') {
+        // daily в календаре не показываем (заполнял бы каждый день)
+        if ((t.rhythm || 'daily') === 'daily') return;
+        const days = lastDayOfMonth(year, month);
+        for (let dd = 1; dd <= days; dd++) {
+          const dISO = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
+          if (!repOccursOn(t, dISO)) continue;
+          const rec = findDayLog(dISO, t.tid);
+          push(dISO, { task: t, project: p, done: !!rec, rep: true });
+          seen[dISO + '::' + t.tid] = true;
+        }
+        return;
+      }
       if (!t.date) return;
       const parts = t.date.split('-');
       if (parts.length !== 3) return;
@@ -3690,6 +4151,7 @@ function collectMonthItems(year, month) {
 }
 
 function renderCalendar() {
+  closeCalDatePicker();
   const monthStart = calMonthStart(calOffset);
   const year = monthStart.getFullYear();
   const month = monthStart.getMonth();   // 0-11
@@ -3913,7 +4375,7 @@ function collectDayItems(dateISO) {
     (p.tasks || []).forEach(function (t) {
       normalizeTask(t);
       let inDay = false;
-      if (t.type === 'rep') inDay = true;
+      if (t.type === 'rep') inDay = repOccursOn(t, dateISO);
       else if (t.date && t.date === dateISO) inDay = true;
       if (!inDay) return;
       const rec = findDayLog(dateISO, t.tid);
@@ -4002,7 +4464,241 @@ function moveDayTask(dateISO, tid, dir) {
 }
 
 
+// ===== сегментный ввод даты в навигации (ДД/ММ/ГГГГ) с автоперескоком =====
+const SEG_ORDER = ['dd', 'mm', 'yyyy'];
+function fillSegs(prefix, iso) {
+  const parts = (iso || '').split('-');
+  const eDD = document.getElementById(prefix + '-dd');
+  const eMM = document.getElementById(prefix + '-mm');
+  const eYY = document.getElementById(prefix + '-yyyy');
+  if (eDD) eDD.value = parts[2] || '';
+  if (eMM) eMM.value = parts[1] || '';
+  if (eYY) eYY.value = parts[0] || '';
+}
+function readSegs(prefix) {
+  const dd = (document.getElementById(prefix + '-dd') || {}).value || '';
+  const mm = (document.getElementById(prefix + '-mm') || {}).value || '';
+  const yyyy = (document.getElementById(prefix + '-yyyy') || {}).value || '';
+  if (!/^\d{1,2}$/.test(dd) || !/^\d{1,2}$/.test(mm) || !/^\d{4}$/.test(yyyy)) return null;
+  const d = parseInt(dd, 10), m = parseInt(mm, 10), y = parseInt(yyyy, 10);
+  if (m < 1 || m > 12) return null;
+  if (d < 1 || d > 31) return null;
+  const dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+}
+function focusSeg(prefix, seg) {
+  const el = document.getElementById(prefix + '-' + seg);
+  if (el) { el.focus(); el.select(); }
+}
+function onSegInput(prefix, seg) {
+  const el = document.getElementById(prefix + '-' + seg);
+  if (!el) return;
+  el.value = el.value.replace(/\D/g, '');
+  const max = (seg === 'yyyy') ? 4 : 2;
+  if (el.value.length >= max) {
+    const i = SEG_ORDER.indexOf(seg);
+    if (i < SEG_ORDER.length - 1) focusSeg(prefix, SEG_ORDER[i + 1]);
+    else applySegs(prefix);
+  }
+}
+function onSegKey(ev, prefix, seg) {
+  if (ev.key === 'Enter') { ev.preventDefault(); applySegs(prefix); return; }
+  if (ev.key === 'Backspace') {
+    const el = document.getElementById(prefix + '-' + seg);
+    if (el && el.value === '') {
+      const i = SEG_ORDER.indexOf(seg);
+      if (i > 0) { ev.preventDefault(); focusSeg(prefix, SEG_ORDER[i - 1]); }
+    }
+  }
+}
+function applySegs(prefix) {
+  const iso = readSegs(prefix);
+  if (!iso) return;
+  if (prefix === 'day') jumpToDay(iso);
+  else jumpToWeek(iso);
+}
+
+// ----- день -----
+function openDayDatePicker() {
+  const edit = document.getElementById('day-date-edit');
+  const label = document.getElementById('day-label');
+  if (!edit || !label) return;
+  fillSegs('day', dayISO());
+  label.style.display = 'none';
+  edit.style.display = 'flex';
+  edit.classList.remove('hidden');
+  focusSeg('day', 'dd');
+}
+function showDayPicker() {
+  const inp = document.getElementById('day-date-input');
+  if (!inp) return;
+  inp.value = readSegs('day') || dayISO();
+  if (typeof inp.showPicker === 'function') { try { inp.showPicker(); return; } catch (e) {} }
+  inp.focus();
+}
+function onNativeDayPick(iso) { if (!iso) return; fillSegs('day', iso); jumpToDay(iso); }
+function closeDayDatePicker() {
+  const edit = document.getElementById('day-date-edit');
+  const label = document.getElementById('day-label');
+  if (edit) { edit.style.display = 'none'; edit.classList.add('hidden'); }
+  if (label) label.style.display = '';
+}
+function jumpToDay(iso) {
+  closeDayDatePicker();
+  if (!iso) return;
+  const parts = iso.split('-');
+  if (parts.length !== 3) return;
+  const picked = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  picked.setHours(0, 0, 0, 0);
+  const base = new Date(); base.setHours(0, 0, 0, 0);
+  dayOffset = Math.round((picked - base) / 86400000);
+  renderDay();
+}
+
+// ----- неделя -----
+function openWeekDatePicker() {
+  const edit = document.getElementById('week-date-edit');
+  const label = document.getElementById('week-label');
+  if (!edit || !label) return;
+  fillSegs('week', weekDates(weekOffset)[0]);
+  label.style.display = 'none';
+  edit.style.display = 'flex';
+  edit.classList.remove('hidden');
+  focusSeg('week', 'dd');
+}
+function showWeekPicker() {
+  const inp = document.getElementById('week-date-input');
+  if (!inp) return;
+  inp.value = readSegs('week') || weekDates(weekOffset)[0];
+  if (typeof inp.showPicker === 'function') { try { inp.showPicker(); return; } catch (e) {} }
+  inp.focus();
+}
+function onNativeWeekPick(iso) { if (!iso) return; fillSegs('week', iso); jumpToWeek(iso); }
+function closeWeekDatePicker() {
+  const edit = document.getElementById('week-date-edit');
+  const label = document.getElementById('week-label');
+  if (edit) { edit.style.display = 'none'; edit.classList.add('hidden'); }
+  if (label) label.style.display = '';
+}
+function jumpToWeek(iso) {
+  closeWeekDatePicker();
+  if (!iso) return;
+  const parts = iso.split('-');
+  if (parts.length !== 3) return;
+  const picked = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  picked.setHours(0, 0, 0, 0);
+  const dow = (picked.getDay() + 6) % 7;
+  const pickedMon = new Date(picked);
+  pickedMon.setDate(picked.getDate() - dow);
+  const thisMon = weekMonday(0);
+  weekOffset = Math.round((pickedMon - thisMon) / (7 * 86400000));
+  renderWeek();
+}
+
+// ----- календарь (ММ/ГГГГ) -----
+function calFillSegs(year, month0) {
+  const eMM = document.getElementById('cal-mm');
+  const eYY = document.getElementById('cal-yyyy');
+  if (eMM) eMM.value = String(month0 + 1).padStart(2, '0');
+  if (eYY) eYY.value = String(year);
+}
+function calReadSegs() {
+  const mm = (document.getElementById('cal-mm') || {}).value || '';
+  const yyyy = (document.getElementById('cal-yyyy') || {}).value || '';
+  if (!/^\d{1,2}$/.test(mm) || !/^\d{4}$/.test(yyyy)) return null;
+  const m = parseInt(mm, 10), y = parseInt(yyyy, 10);
+  if (m < 1 || m > 12) return null;
+  return { year: y, month0: m - 1 };
+}
+function onCalSegInput(seg) {
+  const el = document.getElementById('cal-' + seg);
+  if (!el) return;
+  el.value = el.value.replace(/\D/g, '');
+  const max = (seg === 'yyyy') ? 4 : 2;
+  if (el.value.length >= max) {
+    if (seg === 'mm') { const n = document.getElementById('cal-yyyy'); if (n) { n.focus(); n.select(); } }
+    else applyCalSegs();
+  }
+}
+function onCalSegKey(ev, seg) {
+  if (ev.key === 'Enter') { ev.preventDefault(); applyCalSegs(); return; }
+  if (ev.key === 'Backspace') {
+    const el = document.getElementById('cal-' + seg);
+    if (el && el.value === '' && seg === 'yyyy') {
+      ev.preventDefault();
+      const p = document.getElementById('cal-mm'); if (p) { p.focus(); p.select(); }
+    }
+  }
+}
+function applyCalSegs() { const v = calReadSegs(); if (!v) return; jumpToMonth(v.year, v.month0); }
+function openCalDatePicker() {
+  const edit = document.getElementById('cal-date-edit');
+  const label = document.getElementById('cal-label');
+  if (!edit || !label) return;
+  const ms = calMonthStart(calOffset);
+  calFillSegs(ms.getFullYear(), ms.getMonth());
+  label.style.display = 'none';
+  edit.style.display = 'flex';
+  edit.classList.remove('hidden');
+  const eMM = document.getElementById('cal-mm');
+  if (eMM) { eMM.focus(); eMM.select(); }
+}
+function showCalPicker() {
+  const inp = document.getElementById('cal-date-input');
+  if (!inp) return;
+  const v = calReadSegs();
+  if (v) inp.value = v.year + '-' + String(v.month0 + 1).padStart(2, '0') + '-01';
+  else inp.value = dateToISO(calMonthStart(calOffset));
+  if (typeof inp.showPicker === 'function') { try { inp.showPicker(); return; } catch (e) {} }
+  inp.focus();
+}
+function onNativeCalPick(iso) {
+  if (!iso) return;
+  const parts = iso.split('-');
+  if (parts.length !== 3) return;
+  calFillSegs(+parts[0], +parts[1] - 1);
+  jumpToMonth(+parts[0], +parts[1] - 1);
+}
+function closeCalDatePicker() {
+  const edit = document.getElementById('cal-date-edit');
+  const label = document.getElementById('cal-label');
+  if (edit) { edit.style.display = 'none'; edit.classList.add('hidden'); }
+  if (label) label.style.display = '';
+}
+function jumpToMonth(year, month0) {
+  closeCalDatePicker();
+  const now = new Date();
+  calOffset = (year - now.getFullYear()) * 12 + (month0 - now.getMonth());
+  calSelectedDay = '';
+  renderCalendar();
+}
+
+// закрыть открытый сегментный ввод даты, если клик пришёлся вне его поля и вне его заголовка
+function handleNavPickerOutsideClick(ev) {
+  const groups = [
+    { edit: 'day-date-edit',  label: 'day-label',  close: closeDayDatePicker },
+    { edit: 'week-date-edit', label: 'week-label', close: closeWeekDatePicker },
+    { edit: 'cal-date-edit',  label: 'cal-label',  close: closeCalDatePicker }
+  ];
+  groups.forEach(function (g) {
+    const edit = document.getElementById(g.edit);
+    if (!edit) return;
+    // открыт, если реально виден
+    const open = edit.style.display !== 'none' && !edit.classList.contains('hidden');
+    if (!open) return;
+    const label = document.getElementById(g.label);
+    const t = ev.target;
+    // клик внутри поля ввода или по самому заголовку — не закрываем
+    if (edit.contains(t)) return;
+    if (label && label.contains(t)) return;
+    g.close();
+  });
+}
+
+
 function renderDay() {
+  closeDayDatePicker();
   const dISO = dayISO();
   const todayI = todayISO();
 
@@ -4135,7 +4831,7 @@ function renderDayTask(it, dISO, gi, gcount) {
     h += '<span class="day-proj-tag" style="background:' + color + '">' +
       escapeHtml(p.short) + '</span>';
   }
-  if (isRep) h += '<span class="day-rep-tag">↻ every day</span>';
+  if (isRep) h += '<span class="day-rep-tag">' + escapeHtml(rhythmInfo(t.rhythm).chip) + '</span>';
   h += '</div>';
   if (t.hint) h += '<div class="day-task-hint">' + escapeHtml(t.hint) + '</div>';
   // подзадачи — прогресс + раскрываемый чек-лист (только если есть и задача жива в проекте)
@@ -4401,6 +5097,7 @@ function weekToday() {
 const WEEK_TILE_LIMIT = 6;
 
 function renderWeek() {
+  closeWeekDatePicker();
   const dates = weekDates(weekOffset);
   const firstISO = dates[0], lastISO = dates[6];
   const todayI = todayISO();
@@ -4434,7 +5131,7 @@ function renderWeek() {
     orderBtn.classList.toggle('on', weekOrderMode);
     orderBtn.textContent = weekOrderMode ? '✓ Done' : '↕ Reorder tiles';
     orderHint.textContent = weekOrderMode
-      ? 'Move tiles with ▲▼ — your own order, the Clients tab stays the same'
+      ? 'Move tiles with ▲▼ — your own order, the Clients Overview tab stays the same'
       : '';
   }
 
@@ -4450,7 +5147,7 @@ function renderWeek() {
     (p.tasks || []).forEach(function (t) {
       normalizeTask(t);
       if (t.type === 'rep') {
-        rep.push(t);
+        if (repInRange(t, firstISO, lastISO)) rep.push(t);
       } else if (t.date && t.date >= firstISO && t.date <= lastISO) {
         dated.push(t);
       }
@@ -4670,7 +5367,7 @@ function moveWeekTile(num, dir) {
   state.projects.forEach(function (p) {
     if (p.status === 'paused') return;
     const has = (p.tasks || []).some(function (t) {
-      return t.type === 'rep' ||
+      return (t.type === 'rep' && repInRange(t, firstISO, lastISO)) ||
         (t.date && t.date >= firstISO && t.date <= lastISO);
     });
     if (has) visible.push(p.num);
@@ -4731,7 +5428,8 @@ function init() {
     step = 'renderDay';          renderDay();
     step = 'renderCalendar';     renderCalendar();
     step = 'renderTimeLog';      renderTimeLog();
-    step = 'showTab';            showTab(state.lastTab || 'week');
+    step = 'showTab';            showTab(state.lastTab || 'overview');
+    step = 'navPickerClose';     document.addEventListener('mousedown', handleNavPickerOutsideClick);
     step = 'ticker';             if (state.timer.running) startTicker();
     step = 'saveStatus';         setSaveStatus('Saved', false);
   } catch (e) {
