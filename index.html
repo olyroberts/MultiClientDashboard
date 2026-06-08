@@ -30,7 +30,7 @@
 
   /* ---- Шапка ---- */
   header {
-    padding: 30px 0 18px;
+    padding: 22px 0 16px;
     text-align: center;
   }
   .kicker {
@@ -51,19 +51,22 @@
   }
   .header-edit-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-  /* ---- Полоса сохранения ---- */
+  /* ---- Служебная полоса (Export/Import/Reset) — самый верх ---- */
   .savebar {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: 9px; padding: 8px 14px; margin-bottom: 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
     font-size: 12px;
+  }
+  .savebar-inner {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding-top: 7px; padding-bottom: 7px;
   }
   .savebar .status { color: #1d6b51; font-weight: 500; margin-right: auto; }
   .savebar .status.unsaved { color: #a33636; }
   .savebar button {
-    font-family: inherit; font-size: 11.5px;
-    padding: 5px 11px; border-radius: 6px; cursor: pointer;
-    border: 1px solid var(--line); background: transparent; color: var(--text-dim);
+    font-family: inherit; font-size: 11px;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text-dim);
     transition: all 0.12s;
   }
   .savebar button:hover { border-color: var(--gold); color: var(--text); }
@@ -93,13 +96,21 @@
   .tip-wrap:focus-within::after, .tip-wrap:focus-within::before {
     opacity: 1; visibility: visible;
   }
+  /* для служебной полосы наверху — подсказка раскрывается вниз */
+  .tip-wrap.tip-down[data-tip]::after {
+    bottom: auto; top: calc(100% + 8px);
+  }
+  .tip-wrap.tip-down[data-tip]::before {
+    bottom: auto; top: calc(100% + 3px);
+    border-top-color: transparent; border-bottom-color: #3a3128;
+  }
 
 
   /* ---- Полоса таймера (сквозная) ---- */
   .timerbar {
     display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     background: var(--surface); border: 1px solid var(--line);
-    border-radius: 10px; padding: 10px 16px; margin-bottom: 10px;
+    border-radius: 10px; padding: 10px 16px; margin-bottom: 18px;
   }
   .timer-clock {
     font-family: 'SF Mono', Monaco, Consolas, monospace;
@@ -1527,6 +1538,21 @@ input:focus,textarea:focus,select:focus{
 </head>
 <body>
 
+<div class="savebar">
+  <div class="wrap savebar-inner">
+    <span class="status" id="save-status">Saved</span>
+    <span class="tip-wrap tip-down" data-tip="Download a backup file (JSON) with all your clients, projects and tasks. Keep it safe — you can restore from it later with Import.">
+      <button onclick="exportData()">Export</button>
+    </span>
+    <span class="tip-wrap tip-down" data-tip="Load a backup file you saved earlier with Export. This replaces your current data with the file's contents.">
+      <button onclick="importData()">Import</button>
+    </span>
+    <span class="tip-wrap tip-down" data-tip="Erase everything and start fresh. Export a backup first if you might want your data back.">
+      <button class="danger" onclick="resetData()">Reset</button>
+    </span>
+  </div>
+</div>
+
 <div class="wrap">
   <header>
     <div class="kicker" id="app-kicker">Freelance</div>
@@ -1537,30 +1563,8 @@ input:focus,textarea:focus,select:focus{
     <div class="today" id="today-label"></div>
   </header>
 
-  <div class="timerbar">
-    <div class="timer-clock-block">
-      <div class="timer-clock" id="timer-clock">0:00:00</div>
-      <div class="timer-state" id="timer-state">stopped</div>
-    </div>
-    <button class="tb-start"  id="tb-start"  onclick="timerStart()">▶ Start</button>
-    <button class="tb-pause"  id="tb-pause"  onclick="timerPause()" disabled>❚❚ Pause</button>
-    <button class="tb-stop"   id="tb-stop"   onclick="timerStop()"  disabled>■ Stop</button>
-    <div class="spacer"></div>
-    <button class="tb-manual" onclick="openManualEntry()">+ Add time manually</button>
-  </div>
-
-  <div class="savebar">
-    <span class="status" id="save-status">Saved</span>
-    <span class="tip-wrap" data-tip="Download a backup file (JSON) with all your clients, projects and tasks. Keep it safe — you can restore from it later with Import.">
-      <button onclick="exportData()">Export</button>
-    </span>
-    <span class="tip-wrap" data-tip="Load a backup file you saved earlier with Export. This replaces your current data with the file's contents.">
-      <button onclick="importData()">Import</button>
-    </span>
-    <span class="tip-wrap" data-tip="Erase everything and start fresh. Export a backup first if you might want your data back.">
-      <button class="danger" onclick="resetData()">Reset</button>
-    </span>
-  </div>
+  <div class="ov-summary" id="summary-hero"></div>
+  <div id="summary-filter-bar"></div>
 
   <div class="tabs">
     <button class="tab active" data-tab="overview" onclick="showTab('overview')">Clients Overview</button>
@@ -1683,6 +1687,17 @@ input:focus,textarea:focus,select:focus{
 
   <!-- TIME -->
   <div class="tab-page" id="page-time">
+    <div class="timerbar">
+      <div class="timer-clock-block">
+        <div class="timer-clock" id="timer-clock">0:00:00</div>
+        <div class="timer-state" id="timer-state">stopped</div>
+      </div>
+      <button class="tb-start"  id="tb-start"  onclick="timerStart()">▶ Start</button>
+      <button class="tb-pause"  id="tb-pause"  onclick="timerPause()" disabled>❚❚ Pause</button>
+      <button class="tb-stop"   id="tb-stop"   onclick="timerStop()"  disabled>■ Stop</button>
+      <div class="spacer"></div>
+      <button class="tb-manual" onclick="openManualEntry()">+ Add time manually</button>
+    </div>
     <div class="log-switchbar">
       <div class="time-modeswitch log-viewswitch">
         <button id="lv-done" onclick="logSetView('done')">Done</button>
@@ -2288,8 +2303,50 @@ function saveTimeEntry(opts) {
 // ===== ОБЗОР =====
 let editMode = false;
 let summaryFilter = 'all';   // all / waitMe / waitClient / overdue / unpaid
+
+// Счётчики-герой под шапкой (всегда видны, на всех табах)
+function renderSummary() {
+  const box = document.getElementById('summary-hero');
+  const barBox = document.getElementById('summary-filter-bar');
+  if (!box) return;
+  // в режиме редактирования структуры счётчики скрываем
+  if (editMode) {
+    box.innerHTML = '';
+    box.style.display = 'none';
+    if (barBox) barBox.innerHTML = '';
+    return;
+  }
+  box.style.display = '';
+  const all = state.projects.filter(function (p) { return !stageOf(p.status).closed; });
+  const waitMe     = all.filter(function (p) { return p.waiting === 'me'; }).length;
+  const waitClient = all.filter(function (p) { return p.waiting === 'client'; }).length;
+  const overdue    = state.projects.filter(isOverdue).length;
+  const unpaid     = all.filter(function (p) { return p.payment === 'none'; }).length;
+  function card(f, num, lbl, extra) {
+    const on = summaryFilter === f ? ' ov-on' : '';
+    return '<div class="ov-sum-card' + (extra || '') + on + '" onclick="setSummaryFilter(\'' + f + '\')">' +
+      '<span class="ov-sum-num">' + num + '</span><span class="ov-sum-lbl">' + lbl + '</span></div>';
+  }
+  box.innerHTML =
+    card('waitMe', waitMe, 'Waiting on me', '') +
+    card('waitClient', waitClient, 'Waiting on client', '') +
+    card('overdue', overdue, 'Overdue', overdue ? ' ov-alert' : '') +
+    card('unpaid', unpaid, 'Not paid', unpaid ? ' ov-warn' : '');
+  if (barBox) {
+    barBox.innerHTML = (summaryFilter !== 'all')
+      ? '<div class="ov-filter-bar">Showing filtered projects ' +
+        '<button onclick="setSummaryFilter(summaryFilter)">✕ Show all</button></div>'
+      : '';
+  }
+}
+
 function setSummaryFilter(f) {
   summaryFilter = (summaryFilter === f) ? 'all' : f;
+  // счётчики — герой первого экрана: тап переключает на список клиентов
+  if (summaryFilter !== 'all' && state.lastTab !== 'overview') {
+    showTab('overview');
+  }
+  renderSummary();
   renderOverview();
 }
 function projMatchesSummary(p) {
@@ -2310,6 +2367,7 @@ function toggleEditMode() {
   hint.textContent = editMode
     ? 'Rename, add, delete, move with ▲▼'
     : '';
+  renderSummary();
   renderOverview();
 }
 
@@ -2335,30 +2393,6 @@ function setSphereFilter(id) {
 function renderOverview() {
   const body = document.getElementById('overview-body');
   let html = '';
-
-  // ----- сводка сверху -----
-  if (!editMode) {
-    const all = state.projects.filter(function (p) { return !stageOf(p.status).closed; });
-    const waitMe     = all.filter(function (p) { return p.waiting === 'me'; }).length;
-    const waitClient = all.filter(function (p) { return p.waiting === 'client'; }).length;
-    const overdue    = state.projects.filter(isOverdue).length;
-    const unpaid     = all.filter(function (p) { return p.payment === 'none'; }).length;
-    function card(f, num, lbl, extra) {
-      const on = summaryFilter === f ? ' ov-on' : '';
-      return '<div class="ov-sum-card' + (extra || '') + on + '" onclick="setSummaryFilter(\'' + f + '\')">' +
-        '<span class="ov-sum-num">' + num + '</span><span class="ov-sum-lbl">' + lbl + '</span></div>';
-    }
-    html += '<div class="ov-summary">' +
-      card('waitMe', waitMe, 'Waiting on me', '') +
-      card('waitClient', waitClient, 'Waiting on client', '') +
-      card('overdue', overdue, 'Overdue', overdue ? ' ov-alert' : '') +
-      card('unpaid', unpaid, 'Not paid', unpaid ? ' ov-warn' : '') +
-      '</div>';
-    if (summaryFilter !== 'all') {
-      html += '<div class="ov-filter-bar">Showing filtered projects ' +
-        '<button onclick="setSummaryFilter(summaryFilter)">✕ Show all</button></div>';
-    }
-  }
 
   state.spheres.forEach(function (s, si) {
     if (state.sphereFilter !== 'all' && state.sphereFilter !== s.id) return;
@@ -2426,6 +2460,7 @@ function renderOverview() {
       '</div></div>';
   }
   body.innerHTML = html;
+  renderSummary();
 }
 
 function renderTile(p, s, pi, pcount) {
@@ -5397,6 +5432,7 @@ function moveWeekTile(num, dir) {
 function renderAll() {
   renderHeader();
   renderTimer();
+  renderSummary();
   renderSphereFilter();
   renderOverview();
   renderWeek();
@@ -5422,6 +5458,7 @@ function init() {
       ' ' + today.getFullYear();
     step = 'renderHeader';       renderHeader();
     step = 'renderTimer';        renderTimer();
+    step = 'renderSummary';      renderSummary();
     step = 'renderSphereFilter'; renderSphereFilter();
     step = 'renderOverview';     renderOverview();
     step = 'renderWeek';         renderWeek();
