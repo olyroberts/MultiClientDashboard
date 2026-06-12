@@ -1703,11 +1703,7 @@ input:focus,textarea:focus,select:focus{
       <button class="tb-manual" onclick="openManualEntry()">+ Add time manually</button>
     </div>
     <div class="log-switchbar">
-      <div class="time-modeswitch log-viewswitch">
-        <button id="lv-done" onclick="logSetView('done')">Done</button>
-        <button id="lv-time" onclick="logSetView('time')">Time tracked</button>
-      </div>
-      <div class="time-modeswitch" id="time-periodswitch">
+      <div class="time-modeswitch">
         <button id="tm-week" onclick="timeSetMode('week')">Week</button>
         <button id="tm-month" onclick="timeSetMode('month')">Month</button>
       </div>
@@ -3819,12 +3815,7 @@ function resetData() {
 // ===== ТАБ «ВРЕМЯ” (лог учёта) =====
 let timeMode = 'month';   // 'week' | 'month'
 let timeOffset = 0;       // смещение периода
-let logView = 'done';     // 'done' | 'time' — какой журнал показываем
 
-function logSetView(view) {
-  logView = view;
-  renderTimeLog();
-}
 function timeSetMode(mode) {
   timeMode = mode;
   timeOffset = 0;
@@ -3833,7 +3824,7 @@ function timeSetMode(mode) {
 function timeShift(dir) { timeOffset += dir; renderTimeLog(); }
 function timeToday() { timeOffset = 0; renderTimeLog(); }
 
-// границы текущего периода: { from, to } в ISO (вkeyительно)
+// границы текущего периода: { from, to } в ISO (включительно)
 function timePeriodRange() {
   if (timeMode === 'week') {
     const dates = weekDates(timeOffset);   // переиспользуем расчёт недели
@@ -3849,7 +3840,7 @@ function timePeriodRange() {
   };
 }
 
-// форматирование длительности ofminут
+// форматирование длительности из минут
 function fmtDuration(min) {
   const h = Math.floor(min / 60), m = min % 60;
   if (h > 0 && m > 0) return h + 'h ' + m + 'min';
@@ -3858,13 +3849,7 @@ function fmtDuration(min) {
 }
 
 function renderTimeLog() {
-  // подсветка переключателя вида (Done / Time tracked)
-  const dvb = document.getElementById('lv-done');
-  const tvb = document.getElementById('lv-time');
-  if (dvb) dvb.classList.toggle('on', logView === 'done');
-  if (tvb) tvb.classList.toggle('on', logView === 'time');
-
-  // переkeyатель режима
+  // переключатель режима (неделя/месяц)
   const wb = document.getElementById('tm-week');
   const mb = document.getElementById('tm-month');
   if (wb) wb.classList.toggle('on', timeMode === 'week');
@@ -3906,111 +3891,123 @@ function renderTimeLog() {
   }
   document.getElementById('time-today-btn').classList.toggle('hidden', timeOffset === 0);
 
-  // ветвление по виду журнала
-  if (logView === 'done') { renderDoneBody(range, periodSub); return; }
-
-  // записи периода
+  // записи времени за период
   const entries = state.log.filter(function (r) {
     return r.date >= range.from && r.date <= range.to;
   });
-  entries.sort(function (a, b) {
-    if (a.date !== b.date) return a.date > b.date ? -1 : 1;   // свежие сверху
-    return (b.createdAt || 0) - (a.createdAt || 0);
+  // выполненные дела за период
+  const done = (state.dayLog || []).filter(function (r) {
+    return r.date >= range.from && r.date <= range.to;
   });
 
-  // общий итог периода
+  // общий итог времени
   let totalMin = 0;
   entries.forEach(function (r) { totalMin += r.minutes; });
 
-  // подпись периода: «this month · total 2h 15min”
-  if (entries.length) {
-    subEl.innerHTML = escapeHtml(periodSub) +
-      ' · <span class="tn-total">total ' + fmtDuration(totalMin) + '</span>';
-  } else {
-    subEl.textContent = periodSub;
-  }
+  // подпись периода: «this month · 2h 15min · 4 done»
+  const subBits = [escapeHtml(periodSub)];
+  if (totalMin > 0) subBits.push('<span class="tn-total">' + fmtDuration(totalMin) + '</span>');
+  if (done.length) subBits.push(done.length + ' ' + plural(done.length,'task','tasks','tasks') + ' done');
+  subEl.innerHTML = subBits.join(' · ');
 
   const body = document.getElementById('time-body');
 
-  if (!entries.length) {
-    body.innerHTML = '<div class="time-empty"><div class="big">⏱️</div>' +
-      'No entries for this period.<br>' +
-      'Stop the timer or click “+ Add time manually” to add an entry.</div>';
+  if (!entries.length && !done.length) {
+    body.innerHTML = '<div class="time-empty"><div class="big">🗒️</div>' +
+      'Nothing logged for this period.<br>' +
+      'Track time with the timer, or tick off tasks in the day and week plans.</div>';
     return;
   }
 
-  // ----- агрегация по сферам и проектам -----
-  const bySphere = {};   // sphereId -> { min, projects: {projNum: min} }
-  entries.forEach(function (r) {
-    const p = state.projects.find(function (x) { return x.num === r.projectNum; });
-    const sid = p ? p.sphere : '?';
-    if (!bySphere[sid]) bySphere[sid] = { min: 0, projects: {} };
-    bySphere[sid].min += r.minutes;
-    const pk = r.projectNum || 0;
-    bySphere[sid].projects[pk] = (bySphere[sid].projects[pk] || 0) + r.minutes;
-  });
-
   let h = '';
 
-  // ----- сводка по сферам -----
-  h += '<div class="time-section-title">By client and project</div>';
-  // сферы по убыванию времени
-  const sphereIds = Object.keys(bySphere).sort(function (a, b) {
-    return bySphere[b].min - bySphere[a].min;
-  });
-  sphereIds.forEach(function (sid) {
-    const s = sphereById(sid);
-    const color = s ? s.color : '#9a7b30';
-    const data = bySphere[sid];
-    const pct = totalMin ? Math.round(data.min / totalMin * 100) : 0;
-    h += '<div class="time-bar-row">';
-    h += '<div class="time-bar-head">' +
-      '<span class="tbh-name">' + escapeHtml(s ? (s.id + ' · ' + s.name) : 'No client') + '</span>' +
-      '<span class="tbh-val">' + fmtDuration(data.min) + '</span>' +
-      '<span class="tbh-pct">' + pct + '%</span></div>';
-    h += '<div class="time-bar-track"><div class="time-bar-fill" style="width:' +
-      pct + '%;background:' + color + '"></div></div>';
-    // проекты внутри сферы
-    const projNums = Object.keys(data.projects).sort(function (a, b) {
-      return data.projects[b] - data.projects[a];
+  // ----- сводка времени по сферам и проектам (только если есть время) -----
+  if (entries.length) {
+    const bySphere = {};   // sphereId -> { min, projects: {projNum: min} }
+    entries.forEach(function (r) {
+      const p = state.projects.find(function (x) { return x.num === r.projectNum; });
+      const sid = p ? p.sphere : '?';
+      if (!bySphere[sid]) bySphere[sid] = { min: 0, projects: {} };
+      bySphere[sid].min += r.minutes;
+      const pk = r.projectNum || 0;
+      bySphere[sid].projects[pk] = (bySphere[sid].projects[pk] || 0) + r.minutes;
     });
-    if (projNums.length) {
-      h += '<div class="time-proj-sub">';
-      projNums.forEach(function (pn) {
-        const p = state.projects.find(function (x) { return x.num === parseInt(pn,10); });
-        h += '<div class="tps-row">' +
-          '<span class="tps-name">' + escapeHtml(p ? p.short : 'Project deleted') + '</span>' +
-          '<span class="tps-val">' + fmtDuration(data.projects[pn]) + '</span></div>';
+    h += '<div class="time-section-title">Time by sphere and project</div>';
+    const sphereIds = Object.keys(bySphere).sort(function (a, b) {
+      return bySphere[b].min - bySphere[a].min;
+    });
+    sphereIds.forEach(function (sid) {
+      const s = sphereById(sid);
+      const color = s ? s.color : '#9a7b30';
+      const data = bySphere[sid];
+      const pct = totalMin ? Math.round(data.min / totalMin * 100) : 0;
+      h += '<div class="time-bar-row">';
+      h += '<div class="time-bar-head">' +
+        '<span class="tbh-name">' + escapeHtml(s ? (s.id + ' · ' + s.name) : 'No sphere') + '</span>' +
+        '<span class="tbh-val">' + fmtDuration(data.min) + '</span>' +
+        '<span class="tbh-pct">' + pct + '%</span></div>';
+      h += '<div class="time-bar-track"><div class="time-bar-fill" style="width:' +
+        pct + '%;background:' + color + '"></div></div>';
+      const projNums = Object.keys(data.projects).sort(function (a, b) {
+        return data.projects[b] - data.projects[a];
       });
+      if (projNums.length) {
+        h += '<div class="time-proj-sub">';
+        projNums.forEach(function (pn) {
+          const p = state.projects.find(function (x) { return x.num === parseInt(pn,10); });
+          h += '<div class="tps-row">' +
+            '<span class="tps-name">' + escapeHtml(p ? p.short : 'Project deleted') + '</span>' +
+            '<span class="tps-val">' + fmtDuration(data.projects[pn]) + '</span></div>';
+        });
+        h += '</div>';
+      }
       h += '</div>';
-    }
-    h += '</div>';
-  });
+    });
+  }
 
-  // ----- список записей по дням -----
-  h += '<div class="time-section-title">Entries</div>';
+  // ----- единая лента: время + выполненное, по дням -----
+  h += '<div class="time-section-title">Activity</div>';
+  // объединяем в один массив с типом
+  const items = [];
+  entries.forEach(function (r) {
+    items.push({ kind: 'time', date: r.date, at: r.createdAt || 0, rec: r });
+  });
+  done.forEach(function (r) {
+    items.push({ kind: 'done', date: r.date, at: r.doneAt || 0, rec: r });
+  });
   // группировка по дате
   const byDate = {};
-  entries.forEach(function (r) {
-    if (!byDate[r.date]) byDate[r.date] = [];
-    byDate[r.date].push(r);
+  items.forEach(function (it) {
+    if (!byDate[it.date]) byDate[it.date] = [];
+    byDate[it.date].push(it);
   });
   const dateKeys = Object.keys(byDate).sort(function (a, b) {
-    return a > b ? -1 : 1;   // свежие сверху
+    return a > b ? -1 : 1;   // свежие дни сверху
   });
   const WD_SH = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   dateKeys.forEach(function (dk) {
     const dp = dk.split('-');
     const dObj = new Date(+dp[0], +dp[1]-1, +dp[2]);
-    let daySum = 0;
-    byDate[dk].forEach(function (r) { daySum += r.minutes; });
+    const dayItems = byDate[dk].slice().sort(function (a, b) {
+      return (b.at || 0) - (a.at || 0);   // свежее сверху внутри дня
+    });
+    let daySum = 0, dayDone = 0;
+    dayItems.forEach(function (it) {
+      if (it.kind === 'time') daySum += it.rec.minutes;
+      else dayDone++;
+    });
+    // сводка дня: время и/или число дел
+    const sumBits = [];
+    if (daySum > 0) sumBits.push(fmtDuration(daySum));
+    if (dayDone > 0) sumBits.push(dayDone + ' done');
     h += '<div class="time-day-group">';
     h += '<div class="time-day-label">' +
       '<span>' + capitalize(WD_SH[dObj.getDay()]) + ', ' +
         dObj.getDate() + ' ' + MON_FULL[dObj.getMonth()] + '</span>' +
-      '<span class="tdl-sum">' + fmtDuration(daySum) + '</span></div>';
-    byDate[dk].forEach(function (r) {
-      h += renderTimeEntry(r);
+      (sumBits.length ? '<span class="tdl-sum">' + sumBits.join(' · ') + '</span>' : '') +
+      '</div>';
+    dayItems.forEach(function (it) {
+      h += (it.kind === 'time') ? renderTimeEntry(it.rec) : renderDoneEntry(it.rec);
     });
     h += '</div>';
   });
@@ -4018,80 +4015,28 @@ function renderTimeLog() {
   body.innerHTML = h;
 }
 
-// тело журнала: выполненные задачи (вид Done), из dayLog, по дням
-function renderDoneBody(range, periodSub) {
-  const subEl = document.getElementById('time-sub');
-  const body = document.getElementById('time-body');
-  const MON_FULL = ['January','February','March','April','May','June','July',
-                     'August','September','October','November','December'];
-  const WD_SH = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-  // выполненное за период
-  const done = (state.dayLog || []).filter(function (r) {
-    return r.date >= range.from && r.date <= range.to;
-  });
-
-  if (subEl) {
-    if (done.length) {
-      subEl.innerHTML = escapeHtml(periodSub) +
-        ' · <span class="tn-total">' + done.length + ' ' +
-        plural(done.length, 'task', 'tasks', 'tasks') + ' done</span>';
-    } else {
-      subEl.textContent = periodSub;
-    }
-  }
-
-  if (!done.length) {
-    body.innerHTML = '<div class="time-empty"><div class="big">✓</div>' +
-      'Nothing completed in this period.<br>' +
-      'Tasks you tick off in the Daily Plan or Weekly Plan show up here.</div>';
-    return;
-  }
-
-  // группировка по дате, свежие сверху; внутри дня — по времени выполнения
-  const byDate = {};
-  done.forEach(function (r) {
-    if (!byDate[r.date]) byDate[r.date] = [];
-    byDate[r.date].push(r);
-  });
-  const dateKeys = Object.keys(byDate).sort(function (a, b) { return a > b ? -1 : 1; });
-
-  let h = '';
-  dateKeys.forEach(function (dk) {
-    const recs = byDate[dk].slice().sort(function (a, b) {
-      return (b.doneAt || 0) - (a.doneAt || 0);
-    });
-    const dp = dk.split('-');
-    const dObj = new Date(+dp[0], +dp[1]-1, +dp[2]);
-    h += '<div class="time-day-group">';
-    h += '<div class="time-day-label">' +
-      '<span>' + capitalize(WD_SH[dObj.getDay()]) + ', ' +
-        dObj.getDate() + ' ' + MON_FULL[dObj.getMonth()] + '</span>' +
-      '<span class="dlabel-count">' + recs.length + ' done</span></div>';
-    recs.forEach(function (r) {
-      const p = state.projects.find(function (x) { return x.num === r.projectNum; });
-      const s = p ? sphereById(p.sphere) : null;
-      const taskName = (r.snapshot && r.snapshot.name) ? r.snapshot.name : 'Task';
-      const color = s ? s.color : '#9a7b30';
-      const projLabel = p
-        ? (s ? s.name + ' · ' : '') + p.short
-        : 'Project deleted';
-      h += '<div class="done-entry">' +
-        '<span class="done-check">✓</span>' +
-        '<div class="done-entry-body">' +
-          '<div class="done-entry-task">' + escapeHtml(taskName) + '</div>' +
-          '<div class="done-entry-meta">' +
-            '<span class="done-entry-proj" style="background:' + color + '">' +
-              escapeHtml(projLabel) + '</span>' +
-          '</div>' +
-        '</div>' +
-        (r.doneAt ? '<span class="done-entry-time">' + fmtTimeShort(r.doneAt) + '</span>' : '') +
-      '</div>';
-    });
-    h += '</div>';
-  });
-
-  body.innerHTML = h;
+// одна строка ленты: выполненное дело (из dayLog)
+function renderDoneEntry(r) {
+  const p = state.projects.find(function (x) { return x.num === r.projectNum; });
+  const s = p ? sphereById(p.sphere) : null;
+  const taskName = (r.snapshot && r.snapshot.name) ? r.snapshot.name : 'Task';
+  const color = s ? s.color : '#9a7b30';
+  const projLabel = p
+    ? (s ? s.name + ' · ' : '') + p.short
+    : 'Project deleted';
+  let h = '<div class="done-entry">' +
+    '<span class="done-check">✓</span>' +
+    '<div class="done-entry-body">' +
+      '<div class="done-entry-task">' + escapeHtml(taskName) + '</div>' +
+      '<div class="done-entry-meta">' +
+        '<span class="log-kind log-kind-done">Done</span>' +
+        '<span class="done-entry-proj" style="background:' + color + '">' +
+          escapeHtml(projLabel) + '</span>' +
+      '</div>' +
+    '</div>' +
+    (r.doneAt ? '<span class="done-entry-time">' + fmtTimeShort(r.doneAt) + '</span>' : '') +
+  '</div>';
+  return h;
 }
 
 function renderTimeEntry(r) {
@@ -4103,21 +4048,11 @@ function renderTimeEntry(r) {
   h += '<span class="time-entry-dur">' + fmtDuration(r.minutes) + '</span>';
   h += '<div class="time-entry-body">';
   h += '<div class="time-entry-top">';
+  h += '<span class="log-kind log-kind-time">Time</span>';
   h += '<span class="time-entry-proj" style="background:' + color + '">' +
     escapeHtml(p ? p.short : 'Project deleted') + '</span>';
   if (r.taskName) h += '<span class="time-entry-task">' + escapeHtml(r.taskName) + '</span>';
   h += '</div>';
-  // прогресс подзадач, если задача жива и у неё есть подзадачи (только показ)
-  if (r.taskTid) {
-    const found = findTaskByTid(r.taskTid);
-    if (found && found.task.subs && found.task.subs.length) {
-      const tsd = found.task.subs.filter(function (x){ return x.done; }).length;
-      const ttot = found.task.subs.length;
-      const tpct = Math.round(tsd / ttot * 100);
-      h += '<div class="time-entry-subs">Subtasks: ' + tsd + '/' + ttot +
-        '<span class="dsl-bar"><span class="dsl-fill" style="width:' + tpct + '%"></span></span></div>';
-    }
-  }
   if (r.note) h += '<div class="time-entry-note">' + escapeHtml(r.note) + '</div>';
   h += '</div>';
   h += '<div class="time-entry-actions">' +
