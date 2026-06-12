@@ -61,8 +61,11 @@
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     padding-top: 7px; padding-bottom: 7px;
   }
-  .savebar .status { color: #1d6b51; font-weight: 500; margin-right: auto; }
+  .savebar .status { color: #1d6b51; font-weight: 500; }
   .savebar .status.unsaved { color: #a33636; }
+  .savebar .last-saved {
+    color: var(--text-faint); font-size: 11px; margin-right: auto;
+  }
   .savebar button {
     font-family: inherit; font-size: 11px;
     padding: 4px 10px; border-radius: 6px; cursor: pointer;
@@ -1541,6 +1544,7 @@ input:focus,textarea:focus,select:focus{
 <div class="savebar">
   <div class="wrap savebar-inner">
     <span class="status" id="save-status">Saved</span>
+    <span class="last-saved" id="last-saved"></span>
     <span class="tip-wrap tip-down" data-tip="Download a backup file (JSON) with all your clients, projects and tasks. Keep it safe — you can restore from it later with Import.">
       <button onclick="exportData()">Export</button>
     </span>
@@ -1954,13 +1958,26 @@ function loadState() {
 }
 
 let saveTimer = null;
+// Форматирует дату как dd-mm-yyyy HH:MM:SS (24ч).
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function fmtSaveStamp(d) {
+  return pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear() +
+    ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+}
+function setLastSaved(d) {
+  const el = document.getElementById('last-saved');
+  if (el) el.textContent = 'last saved ' + fmtSaveStamp(d);
+}
 function saveState(immediate) {
   setSaveStatus('Saving…', true);
   if (saveTimer) clearTimeout(saveTimer);
   const doSave = function () {
     try {
+      const now = new Date();
+      state.lastSavedAt = now.getTime();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       setSaveStatus('Saved', false);
+      setLastSaved(now);
     } catch (e) {
       setSaveStatus('Save error', true);
       console.error(e);
@@ -3751,7 +3768,10 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'moya-sistema-' + new Date().toISOString().slice(0, 10) + '.json';
+  const d = new Date();
+  const stamp = pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear() +
+    ' ' + pad2(d.getHours()) + '-' + pad2(d.getMinutes()) + '-' + pad2(d.getSeconds());
+  a.download = 'moya-sistema-' + stamp + '.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -5469,6 +5489,7 @@ function init() {
     step = 'navPickerClose';     document.addEventListener('mousedown', handleNavPickerOutsideClick);
     step = 'ticker';             if (state.timer.running) startTicker();
     step = 'saveStatus';         setSaveStatus('Saved', false);
+    step = 'lastSaved';          if (state.lastSavedAt) setLastSaved(new Date(state.lastSavedAt));
   } catch (e) {
     showErrorBar('Could not load the dashboard. Please refresh the page.');
     console.error('Initialization error at step “' + step + '”:', e);
