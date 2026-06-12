@@ -1962,18 +1962,15 @@ function fmtSaveStamp(d) {
 }
 function setLastSaved(d) {
   const el = document.getElementById('last-saved');
-  if (el) el.textContent = 'last saved ' + fmtSaveStamp(d);
+  if (el) el.textContent = d ? ('last export ' + fmtSaveStamp(d)) : 'not exported yet';
 }
 function saveState(immediate) {
   setSaveStatus('Saving…', true);
   if (saveTimer) clearTimeout(saveTimer);
   const doSave = function () {
     try {
-      const now = new Date();
-      state.lastSavedAt = now.getTime();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       setSaveStatus('Saved', false);
-      setLastSaved(now);
     } catch (e) {
       setSaveStatus('Save error', true);
       console.error(e);
@@ -3760,11 +3757,12 @@ function moveSub(tIdx, sIdx, dir) {
 
 // ===== ЭКСПОРТ / ИМПОРТ / СБРОС =====
 function exportData() {
+  const d = new Date();
+  state.lastExportAt = d.getTime();
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const d = new Date();
   const stamp = pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear() +
     ' ' + pad2(d.getHours()) + '-' + pad2(d.getMinutes()) + '-' + pad2(d.getSeconds());
   // имя файла = заголовок дашборда, очищенный от недопустимых в имени символов
@@ -3775,6 +3773,8 @@ function exportData() {
   a.download = base + ' - ' + stamp + '.json';
   a.click();
   URL.revokeObjectURL(url);
+  saveState(true);   // сохранить метку экспорта в localStorage
+  setLastSaved(d);   // обновить подпись «last export …»
 }
 function importData() {
   const input = document.createElement('input');
@@ -5429,7 +5429,7 @@ function init() {
     step = 'navPickerClose';     document.addEventListener('mousedown', handleNavPickerOutsideClick);
     step = 'ticker';             if (state.timer.running) startTicker();
     step = 'saveStatus';         setSaveStatus('Saved', false);
-    step = 'lastSaved';          if (state.lastSavedAt) setLastSaved(new Date(state.lastSavedAt));
+    step = 'lastSaved';          setLastSaved(state.lastExportAt ? new Date(state.lastExportAt) : null);
   } catch (e) {
     showErrorBar('Could not load the dashboard. Please refresh the page.');
     console.error('Initialization error at step “' + step + '”:', e);
