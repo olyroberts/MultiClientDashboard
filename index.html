@@ -230,6 +230,7 @@
   }
   .tile-waiting.wait-me     { color: #c0640a; border-color: #e0a868; background: #fff6ec; }
   .tile-waiting.wait-client { color: #2f6394; border-color: #9cc0e0; background: #eef5fb; }
+  .tile-waiting.wait-moving { color: #1d6b51; border-color: #a4cdbb; background: #eef7f2; }
   .tile-next {
     font-size: 11.5px; color: var(--text-dim); margin-top: 7px; line-height: 1.4;
   }
@@ -2495,6 +2496,8 @@ function renderTile(p, s, pi, pcount) {
     h += '<div class="tile-waiting wait-me">⏳ Waiting on me</div>';
   } else if (p.waiting === 'client') {
     h += '<div class="tile-waiting wait-client">⏳ Waiting on client</div>';
+  } else if (!stage.closed) {
+    h += '<div class="tile-waiting wait-moving">🟢 It’s moving</div>';
   }
   // next action
   if (p.nextAction) {
@@ -3142,6 +3145,7 @@ function renderProject() {
     if (p.nextAction) meta.push('→ ' + escapeHtml(p.nextAction));
     if (p.waiting === 'me') meta.push('⏳ Waiting on me');
     else if (p.waiting === 'client') meta.push('⏳ Waiting on client');
+    else if (!pst.closed) meta.push('🟢 No one — it’s moving');
     if (p.dueDate) meta.push('📅 Due ' + escapeHtml(fmtDateHuman(p.dueDate)));
     meta.push('£ ' + escapeHtml(paymentOf(p.payment).label));
     h += '<div class="proj-head-meta">' + meta.join('<span class="phm-dot">·</span>') + '</div>';
