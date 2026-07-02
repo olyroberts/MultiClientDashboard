@@ -194,10 +194,14 @@
   .tile-waiting.wait-me     { color: #c0640a; border-color: #e0a868; background: #fff6ec; }
   .tile-waiting.wait-client { color: #2f6394; border-color: #9cc0e0; background: #eef5fb; }
   .tile-waiting.wait-moving { color: #1d6b51; border-color: #a4cdbb; background: #eef7f2; }
-  .tile-next {
-    font-size: 11.5px; color: var(--text-dim); margin-top: 7px; line-height: 1.4;
+  .tile-current {
+    font-size: 12px; color: var(--text); margin-top: 7px; line-height: 1.4;
   }
-  .tile-next .tile-next-label { font-weight: 600; color: var(--text); }
+  .tile-current .tile-current-label { font-weight: 600; color: var(--gold); }
+  .tile-next {
+    font-size: 11.5px; color: var(--text-faint); margin-top: 4px; line-height: 1.4;
+  }
+  .tile-next .tile-next-label { font-weight: 600; color: var(--text-dim); }
   .tile-due {
     font-size: 11px; font-weight: 500; margin-top: 6px;
     display: inline-flex; align-items: center; gap: 4px;
@@ -221,12 +225,15 @@
     padding: 2px 7px; border-radius: 10px; font-weight: 500;
   }
   /* Project stages — cool palette (blue / purple / indigo / grey) */
-  .bg-discovery { background: #e6f0fa; color: #2f6394; }
+  .bg-new       { background: #f0ede6; color: #6b6459; }
+  .bg-gathering { background: #e6f0fa; color: #2f6394; }
   .bg-active    { background: #ece7f7; color: #5a45a8; }
+  .bg-review    { background: #fbeee0; color: #97590f; }
   .bg-delivered { background: #e4e9f7; color: #3a4a99; }
   .bg-completed { background: #ebe9e3; color: #807d75; }
   /* Payment — traffic light (red / amber / green) */
   .pay-none    { background: #f7dcdc; color: #a33636; }
+  .pay-awaiting { background: #fbeee0; color: #97590f; }
   .pay-partial { background: #f7e6cf; color: #9a6b1f; }
   .pay-full    { background: #e2f0ea; color: #1d6b51; }
 
@@ -466,8 +473,13 @@
     border: 1px solid var(--line); background: var(--surface-2); color: var(--text-dim);
     transition: all 0.12s; white-space: nowrap;
   }
-  .proj-head-edit-btn:hover { border-color: var(--gold); color: var(--text); }
-  .proj-head-edit-btn.on { background: #1d6b51; color: #fff; border-color: #1d6b51; }
+  .proj-head-edit-btn { opacity: 0.65; }
+  .proj-head-edit-btn:hover { border-color: var(--gold); color: var(--text); opacity: 1; }
+  .proj-head-edit-btn.dirty {
+    background: #1d6b51; color: #fff; border-color: #1d6b51; opacity: 1;
+    box-shadow: 0 1px 4px rgba(29,107,81,0.28);
+  }
+  .proj-head-edit-btn.dirty:hover { background: #185a44; border-color: #185a44; color: #fff; }
   .proj-head-form { margin-top: 14px; display: flex; flex-direction: column; gap: 4px; }
   .proj-head-form label {
     font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
@@ -481,6 +493,10 @@
   .proj-head-form textarea { resize: vertical; line-height: 1.5; }
   .proj-head-form .phf-row { display: flex; gap: 10px; }
   .proj-head-form .phf-row > div { flex: 1; }
+  .proj-head-form .phf-hint {
+    font-size: 11px; color: var(--text-faint); margin-top: 3px; line-height: 1.35;
+  }
+  .proj-head-form .phf-opt { font-weight: 400; color: var(--text-faint); font-size: 11px; }
   .proj-head-form .phf-actions { display: flex; gap: 8px; margin-top: 14px; }
   .proj-head-form .phf-save {
     font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
@@ -944,27 +960,31 @@ function genId() {
   return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// Project stages: id, label, CSS badge class, whether the project is "closed" (dimmed)
+// Project stages: id, label, description, CSS badge class, whether the project is "closed" (dimmed)
 const STAGES = [
-  { id: 'discovery', label: 'Discovery',   cls: 'bg-discovery', closed: false },
-  { id: 'progress',  label: 'In Progress', cls: 'bg-active',    closed: false },
-  { id: 'delivered', label: 'Delivered',   cls: 'bg-delivered', closed: false },
-  { id: 'completed', label: 'Completed',   cls: 'bg-completed', closed: true  }
+  { id: 'new',       label: 'New / Agreeing', desc: 'Terms not settled yet, not started',            cls: 'bg-new',       closed: false },
+  { id: 'gathering', label: 'Gathering info', desc: 'Briefing, collecting materials and details',     cls: 'bg-gathering', closed: false },
+  { id: 'progress',  label: 'In progress',    desc: 'Doing the work',                                 cls: 'bg-active',    closed: false },
+  { id: 'review',    label: 'In review',      desc: 'Sent to the client, waiting on feedback or edits', cls: 'bg-review',   closed: false },
+  { id: 'delivered', label: 'Delivered',      desc: 'Work handed over, waiting to close (e.g. payment)', cls: 'bg-delivered', closed: false },
+  { id: 'completed', label: 'Completed',      desc: 'Fully closed',                                   cls: 'bg-completed', closed: true  }
 ];
 const STAGE_IDS = STAGES.map(function (s) { return s.id; });
 
 // Payment status
 const PAYMENTS = [
-  { id: 'none',    label: 'Not paid' },
-  { id: 'partial', label: 'Partly paid' },
-  { id: 'full',    label: 'Paid in full' }
+  { id: 'none',     label: 'Not paid' },
+  { id: 'awaiting', label: 'Awaiting payment' },
+  { id: 'partial',  label: 'Partly paid' },
+  { id: 'full',     label: 'Paid in full' }
 ];
 const PAYMENT_IDS = PAYMENTS.map(function (p) { return p.id; });
 function paymentOf(id) {
   return PAYMENTS.find(function (p) { return p.id === id; }) || PAYMENTS[0];
 }
 function stageOf(id) {
-  return STAGES.find(function (s) { return s.id === id; }) || STAGES[1];
+  return STAGES.find(function (s) { return s.id === id; }) ||
+         STAGES.find(function (s) { return s.id === 'progress'; });
 }
 
 const STARTER_SPHERES = [
@@ -974,38 +994,49 @@ const STARTER_SPHERES = [
 ];
 
 
-// Project: { sphere, num, title, short, goal, isKey, status, waiting, nextAction, payment, dueDate, updatedAt }
+// (schema documented above STARTER_PROJECTS)
 //   status     — 'discovery' | 'progress' | 'delivered' | 'completed'
-//   waiting    — 'me' (waiting on me) / 'client' (waiting on client) / '' (no block)
-//   nextAction — short text: the next concrete step
-//   payment    — 'none' / 'partial' / 'full'
-//   dueDate    — 'YYYY-MM-DD' or '' (project deadline)
-//   updatedAt  — timestamp (ms) of last change
+// Project: { sphere, num, title, short, goal, isKey, status, waiting,
+//            currentAction, nextAction, payment, projectDue, stepDue, updatedAt }
+//   status        — 'new'|'gathering'|'progress'|'review'|'delivered'|'completed'
+//   waiting       — 'me' (waiting on me) / 'client' (waiting on client) / '' (no block)
+//   currentAction — short text: what's happening right now
+//   nextAction    — short text: the next concrete step (optional)
+//   payment       — 'none' / 'awaiting' / 'partial' / 'full'
+//   projectDue    — 'YYYY-MM-DD' or '' (whole project / contract deadline)
+//   stepDue       — 'YYYY-MM-DD' or '' (deadline of the current step)
+//   updatedAt     — timestamp (ms) of last change
 const STARTER_PROJECTS = [
-  { sphere:'A', num:1, title:'Website redesign', short:'Website redesign', isKey:true, status:'progress', payment:'partial', dueDate:'2026-06-05',
-    waiting:'me', nextAction:'Finish the homepage mockup', updatedAt:0,
+  { sphere:'A', num:1, title:'Website redesign', short:'Website redesign', isKey:true, status:'progress', payment:'partial',
+    projectDue:'2026-07-15', stepDue:'2026-06-05', waiting:'me',
+    currentAction:'Building the homepage layout', nextAction:'Send first draft for review', updatedAt:0,
     goal:'Full redesign of the marketing site, 5 pages.' },
-  { sphere:'A', num:2, title:'Brand guidelines doc', short:'Brand guidelines', isKey:false, status:'progress', payment:'none', dueDate:'2026-05-28',
-    waiting:'client', nextAction:'Chase client for logo files', updatedAt:0,
+  { sphere:'A', num:2, title:'Brand guidelines doc', short:'Brand guidelines', isKey:false, status:'gathering', payment:'none',
+    projectDue:'2026-06-30', stepDue:'2026-05-28', waiting:'client',
+    currentAction:'Waiting for logo files from the client', nextAction:'Draft the colour palette', updatedAt:0,
     goal:'One-page brand guide: colours, fonts, logo usage.' },
-  { sphere:'B', num:3, title:'Instagram content pack', short:'Instagram content', isKey:false, status:'progress', payment:'partial', dueDate:'2026-06-12',
-    waiting:'client', nextAction:'Wait for approval on 12 posts', updatedAt:0,
+  { sphere:'B', num:3, title:'Instagram content pack', short:'Instagram content', isKey:false, status:'review', payment:'partial',
+    projectDue:'2026-06-20', stepDue:'2026-06-12', waiting:'client',
+    currentAction:'Client reviewing 12 posts', nextAction:'Apply feedback and export finals', updatedAt:0,
     goal:'12 social posts for the spring campaign.' },
-  { sphere:'B', num:4, title:'Menu print design', short:'Menu print design', isKey:false, status:'delivered', payment:'none', dueDate:'',
-    waiting:'me', nextAction:'Send the invoice', updatedAt:0,
+  { sphere:'B', num:4, title:'Menu print design', short:'Menu print design', isKey:false, status:'delivered', payment:'awaiting',
+    projectDue:'', stepDue:'', waiting:'client',
+    currentAction:'Invoice sent, awaiting payment', nextAction:'', updatedAt:0,
     goal:'New in-store menu, print-ready PDF.' },
-  { sphere:'C', num:5, title:'Landing page copy', short:'Landing page copy', isKey:false, status:'discovery', payment:'none', dueDate:'2026-06-20',
-    waiting:'me', nextAction:'Book the discovery call', updatedAt:0,
+  { sphere:'C', num:5, title:'Landing page copy', short:'Landing page copy', isKey:false, status:'new', payment:'none',
+    projectDue:'2026-07-01', stepDue:'2026-06-20', waiting:'me',
+    currentAction:'Agreeing scope and price', nextAction:'Book the discovery call', updatedAt:0,
     goal:'Sales copy for the new membership landing page.' },
-  { sphere:'C', num:6, title:'Logo refresh', short:'Logo refresh', isKey:false, status:'completed', payment:'full', dueDate:'',
-    waiting:'', nextAction:'', updatedAt:0,
+  { sphere:'C', num:6, title:'Logo refresh', short:'Logo refresh', isKey:false, status:'completed', payment:'full',
+    projectDue:'', stepDue:'', waiting:'',
+    currentAction:'', nextAction:'', updatedAt:0,
     goal:'Updated logo in 3 formats.' }
 ];
 
 
 // ===== STATE =====
 const STORAGE_KEY = 'mld_olyrobertsdesigns';
-const SCHEMA_VERSION = 1;   // bump when the data shape changes; migrate in loadState()
+const SCHEMA_VERSION = 2;   // bump when the data shape changes; migrate in loadState()
 let state = null;
 
 function defaultState() {
@@ -1029,21 +1060,31 @@ function loadState() {
       if (typeof state.appKicker !== 'string') state.appKicker = 'Freelance';
       if (typeof state.appTitle !== 'string') state.appTitle = 'Multi-Client Dashboard';
       if (!state.sphereFilter) state.sphereFilter = 'all';
-      if (typeof state.schemaVersion !== 'number') state.schemaVersion = SCHEMA_VERSION;
-      // migrate projects to the status-only schema
+      if (typeof state.schemaVersion !== 'number') state.schemaVersion = 1;
+      // migrate projects to the current schema
       state.projects.forEach(function (p) {
         if (typeof p.waiting !== 'string') p.waiting = '';
+        if (typeof p.currentAction !== 'string') p.currentAction = '';
         if (typeof p.nextAction !== 'string') p.nextAction = '';
         if (typeof p.payment !== 'string') p.payment = 'none';
-        if (typeof p.dueDate !== 'string') p.dueDate = '';
         if (typeof p.updatedAt !== 'number') p.updatedAt = 0;
         if (typeof p.goal !== 'string') p.goal = '';
-        if (p.status === 'active' || p.status === 'review' || p.status === 'waiting') p.status = 'progress';
+        // due dates: old single dueDate becomes the project deadline
+        if (typeof p.projectDue !== 'string') {
+          p.projectDue = (typeof p.dueDate === 'string') ? p.dueDate : '';
+        }
+        if (typeof p.stepDue !== 'string') p.stepDue = '';
+        delete p.dueDate;
+        // stage id migration (old sets -> new 6-stage set)
+        if (p.status === 'discovery') p.status = 'gathering';
+        if (p.status === 'active') p.status = 'progress';
+        if (p.status === 'waiting') p.status = 'progress';
         if (p.status === 'paid') { p.status = 'delivered'; p.payment = 'full'; }
         if (STAGE_IDS.indexOf(p.status) === -1) p.status = 'progress';
         if (PAYMENT_IDS.indexOf(p.payment) === -1) p.payment = 'none';
         delete p.tasks;   // tasks removed from this tool
       });
+      state.schemaVersion = SCHEMA_VERSION;
     } else {
       state = defaultState();
     }
@@ -1316,6 +1357,11 @@ function renderTile(p, s, pi, pcount) {
   } else if (!stage.closed) {
     h += '<div class="tile-waiting wait-moving">🟢 It’s moving</div>';
   }
+  // current action: what's happening right now
+  if (p.currentAction) {
+    h += '<div class="tile-current"><span class="tile-current-label">Now:</span> ' +
+      escapeHtml(p.currentAction) + '</div>';
+  }
   // next action
   if (p.nextAction) {
     h += '<div class="tile-next"><span class="tile-next-label">Next:</span> ' +
@@ -1329,7 +1375,9 @@ function renderTile(p, s, pi, pcount) {
   const upd = updatedLabel(p);
   if (upd) h += '<div class="tile-updated">' + escapeHtml(upd) + '</div>';
   const pay = paymentOf(p.payment);
-  const payCls = p.payment === 'full' ? 'pay-full' : (p.payment === 'partial' ? 'pay-partial' : 'pay-none');
+  const payCls = p.payment === 'full' ? 'pay-full'
+    : (p.payment === 'partial' ? 'pay-partial'
+    : (p.payment === 'awaiting' ? 'pay-awaiting' : 'pay-none'));
   h += '<div class="tile-stat">' + badge +
     ' <span class="tile-badge ' + payCls + '">' + pay.label + '</span></div>';
   h += '</div>';
@@ -1417,7 +1465,7 @@ function addProject(sphereId) {
   state.projects.push({
     sphere: sphereId, num: nextProjectNum(),
     title: title, short: title.slice(0, 22),
-    goal: '', isKey: false, status: 'discovery', waiting: '', nextAction: '', payment: 'none', dueDate: '', updatedAt: Date.now(), tasks: []
+    goal: '', isKey: false, status: 'new', waiting: '', currentAction: '', nextAction: '', payment: 'none', projectDue: '', stepDue: '', updatedAt: Date.now()
   });
   inp.value = '';
   saveState(true);
@@ -1556,23 +1604,31 @@ function pickSwatch(key, col, el) {
 
 // собственное окно подтверждения (не зависит от настроек браузера)
 let confirmCallback = null;
+let cancelCallback = null;
 function confirmModal(message, onYes, opts) {
   opts = opts || {};
   const okLabel = opts.okLabel || 'Delete';
   const okColor = opts.okColor || '#a33636';
+  const cancelLabel = opts.cancelLabel || 'Cancel';
   const title = opts.title || 'Confirm';
+  cancelCallback = opts.onCancel || null;
   const box = document.getElementById('modal-box');
   // поддержка переносов строк в сообщении
   const msgHtml = escapeHtml(message).replace(/\n/g, '<br>');
   box.innerHTML = '<h3>' + escapeHtml(title) + '</h3>' +
     '<p style="font-size:13.5px;color:var(--text-dim);line-height:1.55;">' + msgHtml + '</p>' +
     '<div class="modal-actions">' +
-    '<button class="btn-cancel" onclick="closeConfirm()">Cancel</button>' +
+    '<button class="btn-cancel" onclick="cancelConfirm()">' + escapeHtml(cancelLabel) + '</button>' +
     '<button class="btn-save" style="background:' + okColor + ';" onclick="acceptConfirm()">' +
       escapeHtml(okLabel) + '</button>' +
     '</div>';
   confirmCallback = onYes;
   document.getElementById('modal-bg').classList.add('open');
+}
+function cancelConfirm() {
+  const cb = cancelCallback;
+  closeConfirm();
+  if (cb) cb();
 }
 function acceptConfirm() {
   const cb = confirmCallback;
@@ -1582,6 +1638,7 @@ function acceptConfirm() {
 function closeConfirm() {
   document.getElementById('modal-bg').classList.remove('open');
   confirmCallback = null;
+  cancelCallback = null;
 }
 
 // модалка с произвольным HTML и набором кнопок
@@ -1642,32 +1699,41 @@ function daysBetweenToday(iso) {
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round((target - t0) / 86400000);
 }
-// метка дедлайна для плитки: { text, cls }
+// the soonest of the two dates decides the tile label; returns { text, cls }
 function dueLabel(p) {
-  if (!p.dueDate) return null;
-  const d = daysBetweenToday(p.dueDate);
   const closed = stageOf(p.status).closed;
+  // collect present dates with their kind
+  const dates = [];
+  if (p.stepDue)    dates.push({ iso: p.stepDue,    kind: 'step',    d: daysBetweenToday(p.stepDue) });
+  if (p.projectDue) dates.push({ iso: p.projectDue, kind: 'project', d: daysBetweenToday(p.projectDue) });
+  if (!dates.length) return null;
+  // pick the one that is due earliest (smallest days-from-today)
+  dates.sort(function (a, b) { return a.d - b.d; });
+  const pick = dates[0];
+  const tag = pick.kind === 'step' ? 'step' : 'project';
   let cls = 'due-ok', text;
   if (closed) {
-    text = 'Due ' + fmtDateHuman(p.dueDate);
-  } else if (d < 0) {
-    cls = 'due-over'; text = 'Overdue by ' + Math.abs(d) + plural(Math.abs(d),' day',' days',' days');
-  } else if (d === 0) {
-    cls = 'due-soon'; text = 'Due today';
-  } else if (d === 1) {
-    cls = 'due-soon'; text = 'Due tomorrow';
-  } else if (d <= 3) {
-    cls = 'due-soon'; text = 'Due in ' + d + ' days';
+    text = tag + ' due ' + fmtDateHuman(pick.iso);
+  } else if (pick.d < 0) {
+    cls = 'due-over';
+    text = tag + ' overdue by ' + Math.abs(pick.d) + plural(Math.abs(pick.d), ' day', ' days', ' days');
+  } else if (pick.d === 0) {
+    cls = 'due-soon'; text = tag + ' due today';
+  } else if (pick.d === 1) {
+    cls = 'due-soon'; text = tag + ' due tomorrow';
+  } else if (pick.d <= 3) {
+    cls = 'due-soon'; text = tag + ' due in ' + pick.d + ' days';
   } else {
-    text = 'Due ' + fmtDateHuman(p.dueDate);
+    text = tag + ' due ' + fmtDateHuman(pick.iso);
   }
   return { text: text, cls: cls };
 }
-// проект просрочен (для сводки): дедлайн в прошлом и проект не закрыт
+// project counts as overdue if EITHER date is in the past and it is not closed
 function isOverdue(p) {
-  if (!p.dueDate) return false;
   if (stageOf(p.status).closed) return false;
-  return daysBetweenToday(p.dueDate) < 0;
+  const a = p.stepDue    ? daysBetweenToday(p.stepDue)    : null;
+  const b = p.projectDue ? daysBetweenToday(p.projectDue) : null;
+  return (a !== null && a < 0) || (b !== null && b < 0);
 }
 // отметить проект как изменённый сейчас
 function touchProject(p) {
@@ -1689,56 +1755,94 @@ function updatedLabel(p) {
 
 
 // ===== PROJECT PAGE (overlay) =====
+// The card is always an editable form. `projDirty` tracks unsaved edits so the
+// Save button can invite saving and closing can guard against losing changes.
 let currentProjectNum = null;
-let headerEditMode = false;
+let projDirty = false;
 
 function openProject(num) {
   const p = state.projects.find(function (x) { return x.num === num; });
   if (!p) return;
   currentProjectNum = num;
-  headerEditMode = false;
+  projDirty = false;
   renderProject();
   document.getElementById('proj-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   document.getElementById('proj-overlay').scrollTop = 0;
 }
-function closeProject() {
-  document.getElementById('proj-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-  currentProjectNum = null;
-  headerEditMode = false;
-  renderOverview();
+
+// user changed a field — light up the Save button
+function markProjDirty() {
+  if (projDirty) return;
+  projDirty = true;
+  updateProjSaveBtn();
 }
-function toggleHeaderEdit() {
-  headerEditMode = !headerEditMode;
-  renderProject();
+function updateProjSaveBtn() {
+  const btn = document.getElementById('proj-save-btn');
+  if (!btn) return;
+  btn.classList.toggle('dirty', projDirty);
+  btn.textContent = projDirty ? '\u2713 Save changes' : '\u2713 Saved';
 }
 
-function saveHeaderEdit() {
+// write the form values back onto the project
+function applyProjForm() {
   const p = currentProject();
-  if (!p) { headerEditMode = false; renderProject(); return; }
+  if (!p) return false;
   const titleEl   = document.getElementById('ph-title');
   const shortEl   = document.getElementById('ph-short');
   const goalEl    = document.getElementById('ph-goal');
+  const curEl     = document.getElementById('ph-current');
   const nextEl    = document.getElementById('ph-next');
   const statusEl  = document.getElementById('ph-status');
   const payEl     = document.getElementById('ph-payment');
   const waitEl    = document.getElementById('ph-waiting');
-  const dueEl     = document.getElementById('ph-due');
+  const stepDueEl = document.getElementById('ph-stepdue');
+  const projDueEl = document.getElementById('ph-projdue');
   const keyEl     = document.getElementById('ph-key');
   if (titleEl) p.title = titleEl.value.trim() || p.title;
   if (shortEl) p.short = shortEl.value.trim() || p.short;
   if (goalEl)  p.goal  = goalEl.value.trim();
+  if (curEl)   p.currentAction = curEl.value.trim();
   if (nextEl)  p.nextAction = nextEl.value.trim();
   if (statusEl && STAGE_IDS.indexOf(statusEl.value) !== -1) p.status = statusEl.value;
   if (payEl && PAYMENT_IDS.indexOf(payEl.value) !== -1) p.payment = payEl.value;
   if (waitEl) p.waiting = (waitEl.value === 'me' || waitEl.value === 'client') ? waitEl.value : '';
-  if (dueEl)  p.dueDate = (dueEl.value || '').trim();
+  if (stepDueEl) p.stepDue = (stepDueEl.value || '').trim();
+  if (projDueEl) p.projectDue = (projDueEl.value || '').trim();
   if (keyEl)  p.isKey = (keyEl.value === 'yes');
   touchProject(p);
-  headerEditMode = false;
+  return true;
+}
+
+// Save button in the card
+function saveHeaderEdit() {
+  applyProjForm();
+  projDirty = false;
   saveState(true);
-  renderProject();
+  renderProject();   // refresh the stage badge / labels from saved values
+}
+
+function closeProject() {
+  if (projDirty) {
+    confirmModal('You have unsaved changes to this project.',
+      function () {   // Save
+        applyProjForm();
+        projDirty = false;
+        saveState(true);
+        doCloseProject();
+      },
+      { title: 'Save changes?', okLabel: 'Save', okColor: '#1d6b51',
+        cancelLabel: 'Discard', onCancel: function () { projDirty = false; doCloseProject(); } });
+    return;
+  }
+  doCloseProject();
+}
+function doCloseProject() {
+  document.getElementById('proj-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentProjectNum = null;
+  projDirty = false;
+  renderOverview();
 }
 
 function renderProject() {
@@ -1747,8 +1851,9 @@ function renderProject() {
   if (!p) { box.innerHTML = '<div class="tasks-empty">Project not found.</div>'; return; }
   const s = sphereById(p.sphere);
   const color = s ? s.color : '#9a7b30';
+  var pst = stageOf(p.status);
 
-  // ----- шапка проекта -----
+  // ----- project header -----
   let h = '<div class="proj-head">';
   h += '<div class="proj-head-stripe" style="background:' + color + '"></div>';
   h += '<div class="proj-head-body">';
@@ -1756,83 +1861,77 @@ function renderProject() {
   if (s) h += '<span class="proj-sphere-tag" style="background:' + color + '">' +
     escapeHtml(s.id + ' · ' + s.name) + '</span>';
   if (p.isKey) h += '<span class="proj-key-tag">key project</span>';
-  var pst = stageOf(p.status);
   h += '<span class="proj-status-tag ' + pst.cls + '">' + pst.label + '</span>';
   h += '<span class="pht-spacer"></span>';
-  h += '<button class="proj-head-edit-btn' + (headerEditMode ? ' on' : '') +
-    '" onclick="' + (headerEditMode ? 'saveHeaderEdit()' : 'toggleHeaderEdit()') + '">' +
-    (headerEditMode ? '✓ Save' : '✎ Edit') + '</button>';
+  h += '<button id="proj-save-btn" class="proj-head-edit-btn' + (projDirty ? ' dirty' : '') +
+    '" onclick="saveHeaderEdit()">' + (projDirty ? '\u2713 Save changes' : '\u2713 Saved') + '</button>';
   h += '</div>';
 
-  if (headerEditMode) {
-    // ----- инлайн-форма: имя/цель + все поля проекта -----
-    let stageOpts = '';
-    STAGES.forEach(function (sg) {
-      stageOpts += '<option value="' + sg.id + '"' +
-        (p.status === sg.id ? ' selected' : '') + '>' + escapeHtml(sg.label) + '</option>';
-    });
-    let payOpts = '';
-    PAYMENTS.forEach(function (pm) {
-      payOpts += '<option value="' + pm.id + '"' +
-        ((p.payment || 'none') === pm.id ? ' selected' : '') + '>' + escapeHtml(pm.label) + '</option>';
-    });
-    const waitOpts =
-      '<option value=""' + (!p.waiting ? ' selected' : '') + '>No one — it’s moving</option>' +
-      '<option value="me"' + (p.waiting === 'me' ? ' selected' : '') + '>Waiting on me</option>' +
-      '<option value="client"' + (p.waiting === 'client' ? ' selected' : '') + '>Waiting on client</option>';
-    h += '<div class="proj-head-form">' +
-      '<label>Full name</label>' +
-      '<input type="text" id="ph-title" value="' + escapeHtml(p.title) + '">' +
-      '<label>Short name (for the tile)</label>' +
-      '<input type="text" id="ph-short" value="' + escapeHtml(p.short) + '">' +
-      '<label>Project goal</label>' +
-      '<textarea id="ph-goal" rows="3">' + escapeHtml(p.goal || '') + '</textarea>' +
-      '<label>Next action</label>' +
-      '<input type="text" id="ph-next" value="' + escapeHtml(p.nextAction || '') + '" placeholder="The next concrete step">' +
-      '<div class="phf-row">' +
-        '<div><label>Stage</label>' +
-          '<select id="ph-status">' + stageOpts + '</select></div>' +
-        '<div><label>Payment</label>' +
-          '<select id="ph-payment">' + payOpts + '</select></div>' +
-      '</div>' +
-      '<div class="phf-row">' +
-        '<div><label>Waiting on</label>' +
-          '<select id="ph-waiting">' + waitOpts + '</select></div>' +
-        '<div><label>Due date</label>' +
-          '<input type="date" id="ph-due" value="' + escapeHtml(p.dueDate || '') + '"></div>' +
-      '</div>' +
-      '<div class="phf-row">' +
-        '<div><label>Key project?</label>' +
-          '<select id="ph-key"><option value="no"' + (!p.isKey ? ' selected' : '') + '>No</option>' +
-          '<option value="yes"' + (p.isKey ? ' selected' : '') + '>Yes</option></select></div>' +
-        '<div></div>' +
-      '</div>' +
-      '<div class="phf-actions">' +
-        '<button class="phf-save" onclick="saveHeaderEdit()">✓ Save</button>' +
-        '<button class="phf-cancel" onclick="toggleHeaderEdit()">Cancel</button>' +
-      '</div>' +
-      '</div>';
-  } else {
-    h += '<div class="proj-title">' + escapeHtml(p.title) + '</div>';
-    h += '<div class="proj-goal-label">Project goal</div>';
-    if (p.goal) {
-      h += '<div class="proj-goal">' + escapeHtml(p.goal) + '</div>';
-    } else {
-      h += '<div class="proj-goal empty">No goal set yet.</div>';
-    }
-    // краткая сводка доменных полей в просмотре
-    let meta = [];
-    if (p.nextAction) meta.push('→ ' + escapeHtml(p.nextAction));
-    if (p.waiting === 'me') meta.push('⏳ Waiting on me');
-    else if (p.waiting === 'client') meta.push('⏳ Waiting on client');
-    else if (!pst.closed) meta.push('🟢 No one — it’s moving');
-    if (p.dueDate) meta.push('📅 Due ' + escapeHtml(fmtDateHuman(p.dueDate)));
-    meta.push('£ ' + escapeHtml(paymentOf(p.payment).label));
-    h += '<div class="proj-head-meta">' + meta.join('<span class="phm-dot">·</span>') + '</div>';
-  }
+  // ----- always-on form: name / goal + all project fields -----
+  let stageOpts = '';
+  STAGES.forEach(function (sg) {
+    stageOpts += '<option value="' + sg.id + '"' +
+      (p.status === sg.id ? ' selected' : '') + '>' + escapeHtml(sg.label) + '</option>';
+  });
+  let payOpts = '';
+  PAYMENTS.forEach(function (pm) {
+    payOpts += '<option value="' + pm.id + '"' +
+      ((p.payment || 'none') === pm.id ? ' selected' : '') + '>' + escapeHtml(pm.label) + '</option>';
+  });
+  const waitOpts =
+    '<option value=""' + (!p.waiting ? ' selected' : '') + '>No one — it’s moving</option>' +
+    '<option value="me"' + (p.waiting === 'me' ? ' selected' : '') + '>Waiting on me</option>' +
+    '<option value="client"' + (p.waiting === 'client' ? ' selected' : '') + '>Waiting on client</option>';
+  h += '<div class="proj-head-form">' +
+    '<label>Full name</label>' +
+    '<input type="text" id="ph-title" oninput="markProjDirty()" value="' + escapeHtml(p.title) + '">' +
+    '<label>Short name (for the tile)</label>' +
+    '<input type="text" id="ph-short" oninput="markProjDirty()" value="' + escapeHtml(p.short) + '">' +
+    '<label>Project goal</label>' +
+    '<textarea id="ph-goal" rows="3" oninput="markProjDirty()">' + escapeHtml(p.goal || '') + '</textarea>' +
+    '<label>Current action</label>' +
+    '<input type="text" id="ph-current" oninput="markProjDirty()" value="' + escapeHtml(p.currentAction || '') + '" placeholder="What you’re doing right now">' +
+    '<label>Next action <span class="phf-opt">(optional)</span></label>' +
+    '<input type="text" id="ph-next" oninput="markProjDirty()" value="' + escapeHtml(p.nextAction || '') + '" placeholder="The next concrete step">' +
+    '<div class="phf-row">' +
+      '<div><label>Stage</label>' +
+        '<select id="ph-status" onchange="onStageChange()">' + stageOpts + '</select>' +
+        '<div class="phf-hint" id="ph-status-hint">' + escapeHtml(pst.desc || '') + '</div></div>' +
+      '<div><label>Payment</label>' +
+        '<select id="ph-payment" onchange="markProjDirty()">' + payOpts + '</select></div>' +
+    '</div>' +
+    '<div class="phf-row">' +
+      '<div><label>Waiting on</label>' +
+        '<select id="ph-waiting" onchange="markProjDirty()">' + waitOpts + '</select></div>' +
+      '<div></div>' +
+    '</div>' +
+    '<div class="phf-row">' +
+      '<div><label>This step due</label>' +
+        '<input type="date" id="ph-stepdue" onchange="markProjDirty()" value="' + escapeHtml(p.stepDue || '') + '"></div>' +
+      '<div><label>Project deadline</label>' +
+        '<input type="date" id="ph-projdue" onchange="markProjDirty()" value="' + escapeHtml(p.projectDue || '') + '"></div>' +
+    '</div>' +
+    '<div class="phf-row">' +
+      '<div><label>Key project?</label>' +
+        '<select id="ph-key" onchange="markProjDirty()"><option value="no"' + (!p.isKey ? ' selected' : '') + '>No</option>' +
+        '<option value="yes"' + (p.isKey ? ' selected' : '') + '>Yes</option></select></div>' +
+      '<div></div>' +
+    '</div>' +
+    '<div class="phf-actions">' +
+      '<button class="phf-save" onclick="saveHeaderEdit()">✓ Save changes</button>' +
+    '</div>' +
+    '</div>';
   h += '</div></div>';
 
   box.innerHTML = h;
+}
+
+// stage dropdown changed: refresh its inline description and flag dirty
+function onStageChange() {
+  const sel = document.getElementById('ph-status');
+  const hint = document.getElementById('ph-status-hint');
+  if (sel && hint) hint.textContent = (stageOf(sel.value).desc || '');
+  markProjDirty();
 }
 
 function exportData() {
