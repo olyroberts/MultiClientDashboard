@@ -229,7 +229,7 @@
   .bg-gathering { background: #e6f0fa; color: #2f6394; }
   .bg-active    { background: #ece7f7; color: #5a45a8; }
   .bg-review    { background: #fbeee0; color: #97590f; }
-  .bg-delivered { background: #e4e9f7; color: #3a4a99; }
+  .bg-delivered { background: #dff0e6; color: #2b7a52; }
   .bg-completed { background: #ebe9e3; color: #807d75; }
   /* Payment — traffic light (red / amber / green) */
   .pay-none    { background: #f7dcdc; color: #a33636; }
@@ -500,10 +500,17 @@
   .proj-head-form .phf-actions { display: flex; gap: 8px; margin-top: 14px; }
   .proj-head-form .phf-save {
     font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-    padding: 9px 18px; border-radius: 8px; border: none;
+    padding: 9px 18px; border-radius: 8px; border: 1px solid #1d6b51;
     background: #1d6b51; color: #fff; transition: all 0.12s;
   }
   .proj-head-form .phf-save:hover { background: #185a44; }
+  .proj-head-form .phf-save.is-saved {
+    background: var(--surface-2); color: var(--text-dim); border-color: var(--line);
+    opacity: 0.7;
+  }
+  .proj-head-form .phf-save.is-saved:hover {
+    background: var(--surface-2); border-color: var(--gold); color: var(--text); opacity: 1;
+  }
   .proj-head-form .phf-cancel {
     font-family: inherit; font-size: 13px; cursor: pointer;
     padding: 9px 16px; border-radius: 8px;
@@ -1348,7 +1355,6 @@ function renderTile(p, s, pi, pcount) {
   h += '<div class="tile-body">';
   h += '<div class="tile-name">';
   h += escapeHtml(p.short) + (p.isKey ? '<span class="tile-key">key</span>' : '') + '</div>';
-  h += '<div class="tile-sub">client ' + s.id + ' · ' + escapeHtml(s.tag) + '</div>';
   // waiting-метка: кто блокирует
   if (p.waiting === 'me') {
     h += '<div class="tile-waiting wait-me">⏳ Waiting on me</div>';
@@ -1359,7 +1365,7 @@ function renderTile(p, s, pi, pcount) {
   }
   // current action: what's happening right now
   if (p.currentAction) {
-    h += '<div class="tile-current"><span class="tile-current-label">Now:</span> ' +
+    h += '<div class="tile-current"><span class="tile-current-label">Current action:</span> ' +
       escapeHtml(p.currentAction) + '</div>';
   }
   // next action
@@ -1367,11 +1373,10 @@ function renderTile(p, s, pi, pcount) {
     h += '<div class="tile-next"><span class="tile-next-label">Next:</span> ' +
       escapeHtml(p.nextAction) + '</div>';
   }
-  // due date
-  const due = dueLabel(p);
-  if (due) {
+  // due dates (step + project), always shown when set
+  dueLabels(p).forEach(function (due) {
     h += '<div class="tile-due ' + due.cls + '">' + escapeHtml(due.text) + '</div>';
-  }
+  });
   const upd = updatedLabel(p);
   if (upd) h += '<div class="tile-updated">' + escapeHtml(upd) + '</div>';
   const pay = paymentOf(p.payment);
@@ -1699,34 +1704,33 @@ function daysBetweenToday(iso) {
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round((target - t0) / 86400000);
 }
-// the soonest of the two dates decides the tile label; returns { text, cls }
-function dueLabel(p) {
-  const closed = stageOf(p.status).closed;
-  // collect present dates with their kind
-  const dates = [];
-  if (p.stepDue)    dates.push({ iso: p.stepDue,    kind: 'step',    d: daysBetweenToday(p.stepDue) });
-  if (p.projectDue) dates.push({ iso: p.projectDue, kind: 'project', d: daysBetweenToday(p.projectDue) });
-  if (!dates.length) return null;
-  // pick the one that is due earliest (smallest days-from-today)
-  dates.sort(function (a, b) { return a.d - b.d; });
-  const pick = dates[0];
-  const tag = pick.kind === 'step' ? 'step' : 'project';
+// label for a single date; returns { text, cls }
+function oneDateLabel(iso, kindLabel, closed) {
+  const d = daysBetweenToday(iso);
   let cls = 'due-ok', text;
   if (closed) {
-    text = tag + ' due ' + fmtDateHuman(pick.iso);
-  } else if (pick.d < 0) {
+    text = kindLabel + ' ' + fmtDateHuman(iso);
+  } else if (d < 0) {
     cls = 'due-over';
-    text = tag + ' overdue by ' + Math.abs(pick.d) + plural(Math.abs(pick.d), ' day', ' days', ' days');
-  } else if (pick.d === 0) {
-    cls = 'due-soon'; text = tag + ' due today';
-  } else if (pick.d === 1) {
-    cls = 'due-soon'; text = tag + ' due tomorrow';
-  } else if (pick.d <= 3) {
-    cls = 'due-soon'; text = tag + ' due in ' + pick.d + ' days';
+    text = kindLabel + ' overdue by ' + Math.abs(d) + plural(Math.abs(d), ' day', ' days', ' days');
+  } else if (d === 0) {
+    cls = 'due-soon'; text = kindLabel + ' due today';
+  } else if (d === 1) {
+    cls = 'due-soon'; text = kindLabel + ' due tomorrow';
+  } else if (d <= 3) {
+    cls = 'due-soon'; text = kindLabel + ' due in ' + d + ' days';
   } else {
-    text = tag + ' due ' + fmtDateHuman(pick.iso);
+    text = kindLabel + ' ' + fmtDateHuman(iso);
   }
   return { text: text, cls: cls };
+}
+// both dates for the tile, always shown when set; returns array of { text, cls }
+function dueLabels(p) {
+  const closed = stageOf(p.status).closed;
+  const out = [];
+  if (p.stepDue)    out.push(oneDateLabel(p.stepDue,    'Step:', closed));
+  if (p.projectDue) out.push(oneDateLabel(p.projectDue, 'Project:', closed));
+  return out;
 }
 // project counts as overdue if EITHER date is in the past and it is not closed
 function isOverdue(p) {
@@ -1778,10 +1782,16 @@ function markProjDirty() {
   updateProjSaveBtn();
 }
 function updateProjSaveBtn() {
-  const btn = document.getElementById('proj-save-btn');
-  if (!btn) return;
-  btn.classList.toggle('dirty', projDirty);
-  btn.textContent = projDirty ? '\u2713 Save changes' : '\u2713 Saved';
+  const top = document.getElementById('proj-save-btn');
+  if (top) {
+    top.classList.toggle('dirty', projDirty);
+    top.textContent = projDirty ? '\u2713 Save changes' : '\u2713 Saved';
+  }
+  const bottom = document.getElementById('proj-save-btn-bottom');
+  if (bottom) {
+    bottom.classList.toggle('is-saved', !projDirty);
+    bottom.textContent = projDirty ? '\u2713 Save changes' : '\u2713 Saved';
+  }
 }
 
 // write the form values back onto the project
@@ -1918,7 +1928,8 @@ function renderProject() {
       '<div></div>' +
     '</div>' +
     '<div class="phf-actions">' +
-      '<button class="phf-save" onclick="saveHeaderEdit()">✓ Save changes</button>' +
+      '<button id="proj-save-btn-bottom" class="phf-save' + (projDirty ? '' : ' is-saved') +
+        '" onclick="saveHeaderEdit()">' + (projDirty ? '✓ Save changes' : '✓ Saved') + '</button>' +
     '</div>' +
     '</div>';
   h += '</div></div>';
